@@ -3,6 +3,573 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>KS1 Learning Snack: Auf dem Weg zum 14. Juli</title>
+    <style>
+        :root {
+            --ks1-blue: #0077b6;
+            --ks1-dark: #005b8e;
+            --ks1-red: #e60000;
+            --ks1-yellow: #ffcc00;
+            --ks1-green: #2b9348;
+            --ks1-orange: #f77f00;
+            --wa-bg: #efeae2;
+            --wa-bot: #ffffff;
+            --wa-user: #d9fdd3;
+            --wa-text: #111b21;
+            --wa-meta: #667781;
+        }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: #d1d7db;
+            color: var(--wa-text);
+            display: flex;
+            justify-content: center;
+            min-height: 100vh;
+        }
+        .app-wrapper {
+            width: 100%;
+            max-width: 680px;
+            background-color: var(--wa-bg);
+            background-image: radial-gradient(rgba(0,0,0,0.03) 1px, transparent 0);
+            background-size: 20px 20px;
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+            box-shadow: 0 2px 18px rgba(0,0,0,0.12);
+            position: relative;
+        }
+        /* KS1 Farbstreifen ganz oben */
+        .ks1-colorbar {
+            height: 4px;
+            width: 100%;
+            background: linear-gradient(90deg, 
+                var(--ks1-blue) 0% 50%, 
+                var(--ks1-red) 50% 62.5%, 
+                var(--ks1-yellow) 62.5% 75%, 
+                var(--ks1-green) 75% 87.5%, 
+                var(--ks1-orange) 87.5% 100%);
+            position: sticky;
+            top: 0;
+            z-index: 21;
+        }
+        header {
+            background-color: #f0f2f5;
+            padding: 10px 16px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            border-bottom: 1px solid #d1d7db;
+            position: sticky;
+            top: 4px;
+            z-index: 20;
+        }
+        .header-left {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        .avatar-circle {
+            width: 42px;
+            height: 42px;
+            border-radius: 50%;
+            background: #ffffff;
+            border: 1px solid #e2e8f0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 4px;
+            flex-shrink: 0;
+        }
+        .chat-title h1 {
+            font-size: 1rem;
+            font-weight: 600;
+            color: var(--wa-text);
+        }
+        .chat-title p {
+            font-size: 0.78rem;
+            color: var(--wa-meta);
+            margin-top: 1px;
+        }
+        .header-actions {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .status-pill {
+            font-size: 0.8rem;
+            color: var(--ks1-blue);
+            background: #e0f2fe;
+            padding: 5px 10px;
+            border-radius: 12px;
+            font-weight: 600;
+        }
+        .qr-btn {
+            background: var(--ks1-blue);
+            color: white;
+            border: none;
+            padding: 6px 11px;
+            border-radius: 8px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            cursor: pointer;
+        }
+        .qr-btn:hover { background: var(--ks1-dark); }
+
+        #chat-area {
+            flex: 1;
+            padding: 18px 16px 32px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        .date-chip {
+            align-self: center;
+            background: #ffffff;
+            color: var(--wa-meta);
+            font-size: 0.75rem;
+            padding: 5px 12px;
+            border-radius: 8px;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.06);
+            margin-bottom: 6px;
+        }
+        .msg-row {
+            display: flex;
+            flex-direction: column;
+            max-width: 82%;
+            animation: fadeIn 0.2s ease-out;
+        }
+        .msg-row.bot { align-self: flex-start; }
+        .msg-row.user { align-self: flex-end; }
+
+        .bubble {
+            padding: 8px 12px 6px;
+            border-radius: 8px;
+            font-size: 0.94rem;
+            line-height: 1.42;
+            box-shadow: 0 1px 1.5px rgba(0,0,0,0.08);
+            position: relative;
+        }
+        .msg-row.bot .bubble {
+            background: var(--wa-bot);
+            border-top-left-radius: 0;
+        }
+        .msg-row.user .bubble {
+            background: var(--wa-user);
+            border-top-right-radius: 0;
+        }
+        .bubble.correct-reply {
+            border-left: 4px solid var(--ks1-green);
+        }
+        .bubble.wrong-reply {
+            border-left: 4px solid var(--ks1-red);
+        }
+        .meta-time {
+            display: flex;
+            justify-content: flex-end;
+            align-items: center;
+            gap: 4px;
+            font-size: 0.68rem;
+            color: var(--wa-meta);
+            margin-top: 3px;
+        }
+        .ticks { color: #53bdeb; font-size: 0.78rem; }
+
+        .options-box {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            margin-top: 4px;
+            max-width: 82%;
+            align-self: flex-start;
+        }
+        .opt-btn {
+            background: #ffffff;
+            border: 1px solid #cbd5e1;
+            border-left: 4px solid var(--ks1-blue);
+            color: var(--ks1-blue);
+            padding: 10px 14px;
+            border-radius: 8px;
+            font-size: 0.92rem;
+            font-weight: 500;
+            text-align: left;
+            cursor: pointer;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+            transition: background 0.12s;
+        }
+        .opt-btn:hover:not(:disabled) {
+            background: #f0f9ff;
+        }
+        .opt-btn:disabled {
+            opacity: 0.55;
+            cursor: default;
+        }
+        .opt-btn.picked-wrong {
+            border-left-color: var(--ks1-red);
+            color: var(--ks1-red);
+            text-decoration: line-through;
+            background: #fff5f5;
+        }
+        .opt-btn.picked-correct {
+            border-left-color: var(--ks1-green);
+            color: var(--ks1-green);
+            font-weight: 600;
+            background: #f0fdf4;
+        }
+
+        .restart-btn {
+            align-self: center;
+            margin-top: 14px;
+            background: #ffffff;
+            color: var(--ks1-blue);
+            border: 1px solid var(--ks1-blue);
+            padding: 9px 18px;
+            border-radius: 18px;
+            font-size: 0.88rem;
+            font-weight: 600;
+            cursor: pointer;
+        }
+
+        /* QR-Code Druck-Modal */
+        #qr-modal {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.5);
+            z-index: 100;
+            align-items: center;
+            justify-content: center;
+            padding: 16px;
+        }
+        .qr-card {
+            background: white;
+            max-width: 420px;
+            width: 100%;
+            border-radius: 12px;
+            padding: 24px;
+            text-align: center;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+        .qr-card h2 {
+            font-size: 1.15rem;
+            margin: 12px 0 6px;
+            color: var(--wa-text);
+        }
+        .qr-card p {
+            font-size: 0.85rem;
+            color: var(--wa-meta);
+            margin-bottom: 14px;
+        }
+        .qr-card img {
+            width: 200px;
+            height: 200px;
+            border: 1px solid #e2e8f0;
+            padding: 8px;
+            border-radius: 8px;
+        }
+        .qr-url-input {
+            width: 100%;
+            padding: 8px 10px;
+            margin: 12px 0;
+            border: 1px solid #cbd5e1;
+            border-radius: 6px;
+            font-size: 0.82rem;
+            text-align: center;
+        }
+        .modal-btns {
+            display: flex;
+            gap: 8px;
+            justify-content: center;
+            margin-top: 8px;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(4px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        @media print {
+            body * { visibility: hidden; }
+            #qr-modal, #qr-modal * { visibility: visible; }
+            #qr-modal { position: absolute; inset: 0; background: white; display: flex !important; }
+            .no-print { display: none !important; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="app-wrapper">
+    <div class="ks1-colorbar"></div>
+    <header>
+        <div class="header-left">
+            <div class="avatar-circle" title="KS1">
+                <!-- Originalgetreues KS1-Logo als Vektorgrafik -->
+                <svg viewBox="0 0 220 75" width="34" height="34" xmlns="http://www.w3.org/2000/svg">
+                    <text x="2" y="62" font-family="Arial, sans-serif" font-weight="900" font-size="68" fill="#0077b6">KS</text>
+                    <path d="M 105 62 A 28 28 0 0 1 130 8 L 130 22 L 116 22 L 116 34 L 130 34 L 130 62 Z" fill="#0077b6"/>
+                    <path d="M 138 6 A 28 28 0 0 1 138 64 Z" fill="#e60000"/>
+                    <path d="M 160 6 A 28 28 0 0 1 160 64 Z" fill="#ffcc00"/>
+                    <path d="M 182 6 A 28 28 0 0 1 182 64 Z" fill="#2b9348"/>
+                    <path d="M 204 6 A 28 28 0 0 1 204 64 Z" fill="#f77f00"/>
+                </svg>
+            </div>
+            <div class="chat-title">
+                <h1>Auf dem Weg zum 14. Juli</h1>
+                <p>KS1 · GGK | WGE | DEC · BPE 1.1</p>
+            </div>
+        </div>
+        <div class="header-actions">
+            <span class="status-pill" id="progress-pill">Start</span>
+            <button class="qr-btn" onclick="openQrModal()">QR-Code</button>
+        </div>
+    </header>
+
+    <div id="chat-area">
+        <div class="date-chip">HEUTE</div>
+    </div>
+</div>
+
+<!-- QR-Code Modal zum direkten Ausdrucken -->
+<div id="qr-modal">
+    <div class="qr-card">
+        <svg viewBox="0 0 220 75" width="110" height="38" xmlns="http://www.w3.org/2000/svg">
+            <text x="2" y="62" font-family="Arial, sans-serif" font-weight="900" font-size="68" fill="#0077b6">KS</text>
+            <path d="M 105 62 A 28 28 0 0 1 130 8 L 130 22 L 116 22 L 116 34 L 130 34 L 130 62 Z" fill="#0077b6"/>
+            <path d="M 138 6 A 28 28 0 0 1 138 64 Z" fill="#e60000"/>
+            <path d="M 160 6 A 28 28 0 0 1 160 64 Z" fill="#ffcc00"/>
+            <path d="M 182 6 A 28 28 0 0 1 182 64 Z" fill="#2b9348"/>
+            <path d="M 204 6 A 28 28 0 0 1 204 64 Z" fill="#f77f00"/>
+        </svg>
+        <h2>Learning Snack: Absolutismus → Revolution</h2>
+        <p>QR-Code mit dem Smartphone scannen, alle 10 Begriffe lösen und danach auf dem Arbeitsblatt (Seite 3) weiterarbeiten.</p>
+        <img id="qr-img" src="" alt="QR-Code">
+        <input type="text" id="qr-url" class="qr-url-input no-print" oninput="updateQr()" placeholder="Link zur Seite">
+        <div class="modal-btns no-print">
+            <button class="qr-btn" onclick="window.print()">🖨️ Drucken / PDF</button>
+            <button class="qr-btn" style="background:#64748b" onclick="closeQrModal()">Schließen</button>
+        </div>
+    </div>
+</div>
+
+<script>
+const snackData = [
+    {
+        type: "text",
+        content: "Hallo! Die Generalstände sind einberufen – von da bis zum Sturm auf die Bastille sind es zehn Wochen. Erst sechs Begriffe: Worauf ruht die alte Ordnung? Danach die Kette bis zum 14. Juli."
+    },
+    {
+        type: "question",
+        question: "Los geht’s. Welcher Begriff ist gemeint? „Die Gesellschaft ist in drei Stände geteilt: Geistlichkeit, Adel und der dritte Stand mit rund 98 Prozent der Menschen. Die Geburt entscheidet, wohin du gehörst.”",
+        options: [
+            { text: "Ständegesellschaft", correct: true, feedback: "Richtig. 98 Prozent sitzen im dritten Stand – und haben eine von drei Stimmen." },
+            { text: "Absolutismus", correct: false, feedback: "Nein, das ist die Herrschaftsform. Hier geht es um den Aufbau der Gesellschaft." },
+            { text: "Privilegien", correct: false, feedback: "Dicht dran. Privilegien sind die Vorrechte darin, nicht die Ordnung selbst." }
+        ]
+    },
+    {
+        type: "question",
+        question: "„Vorrechte, die nur Adel und Geistlichkeit haben: Befreiung von wichtigen Steuern, eigene Gerichte, Zugang zu den hohen Ämtern.”",
+        options: [
+            { text: "Privilegien", correct: true, feedback: "Genau. Wer am wenigsten hat, zahlt am meisten. Das steht 1789 in fast jedem Beschwerdeheft." },
+            { text: "Ständegesellschaft", correct: false, feedback: "Nein, das ist der Rahmen. Gesucht sind die Vorrechte darin." },
+            { text: "Gottesgnadentum", correct: false, feedback: "Nein, das begründet die Macht des Königs, nicht die Vorrechte des Adels." }
+        ]
+    },
+    {
+        type: "question",
+        question: "„Der König versteht sich als unumschränkter Herrscher, der niemandem Rechenschaft schuldig ist. Er ist zugleich oberster Richter und Gesetzgeber.”",
+        options: [
+            { text: "Absolutismus", correct: true, feedback: "Richtig. Einer entscheidet, niemand kontrolliert ihn. Genau das steht am 20. Juni zur Debatte." },
+            { text: "Gewaltenteilung", correct: false, feedback: "Andersherum – das ist das Gegenmodell dazu." },
+            { text: "Gottesgnadentum", correct: false, feedback: "Dicht dran. Das ist die Begründung der Macht, nicht die Herrschaftsform." }
+        ]
+    },
+    {
+        type: "question",
+        question: "„Der Herrscher beansprucht, von Gott ins Amt berufen zu sein. Damit begründet er seine uneingeschränkte Macht.”",
+        options: [
+            { text: "Gottesgnadentum", correct: true, feedback: "Ja. Wer von Gott eingesetzt ist, muss sich vor keiner Versammlung rechtfertigen." },
+            { text: "Absolutismus", correct: false, feedback: "Fast. Gesucht ist die Begründung, nicht die Herrschaftsform selbst." },
+            { text: "Aufklärung", correct: false, feedback: "Nein – die stellt genau diesen Anspruch infrage." }
+        ]
+    },
+    {
+        type: "question",
+        question: "„Geistesrichtung des 18. Jahrhunderts, die auf den Verstand setzt. Forderungen: Gleichheit der Menschen, Toleranz, Freiheit des Einzelnen.”",
+        options: [
+            { text: "Aufklärung", correct: true, feedback: "Genau. Sie liefert nicht den Hunger, aber die Worte." },
+            { text: "Gewaltenteilung", correct: false, feedback: "Das ist eine einzelne Forderung daraus, nicht das Ganze." },
+            { text: "Privilegien", correct: false, feedback: "Im Gegenteil – die Aufklärung greift Privilegien an." }
+        ]
+    },
+    {
+        type: "question",
+        question: "„Trennung der drei Gewalten im Staat: Gesetzgebung, Ausführung der Gesetze, Rechtsprechung. Sie kontrollieren sich gegenseitig.”",
+        options: [
+            { text: "Gewaltenteilung", correct: true, feedback: "Richtig. Im Absolutismus hält der König alle drei in einer Hand." },
+            { text: "Aufklärung", correct: false, feedback: "Zu weit gefasst – das ist die Denkrichtung, aus der die Forderung kommt." },
+            { text: "Ständegesellschaft", correct: false, feedback: "Nein, das betrifft die Gesellschaft, nicht die Staatsgewalt." }
+        ]
+    },
+    {
+        type: "text",
+        content: "Sechs Begriffe, eine Ordnung. Jetzt die zehn Wochen bis zur Bastille."
+    },
+    {
+        type: "question",
+        question: "5. Mai 1789: Die Generalstände treten zusammen, zum ersten Mal seit 175 Jahren. Worüber wird sofort gestritten?",
+        options: [
+            { text: "Ob nach Ständen oder nach Köpfen abgestimmt wird", correct: true, feedback: "Richtig. Nach Ständen heißt zwei zu eins gegen den dritten Stand – obwohl er 98 Prozent vertritt." },
+            { text: "Ob der König abdanken soll", correct: false, feedback: "Nein. Daran denkt im Mai 1789 niemand." },
+            { text: "Ob Frankreich Krieg führen soll", correct: false, feedback: "Nein. Es geht um Geld und um Stimmen." }
+        ]
+    },
+    {
+        type: "question",
+        question: "17. Juni: Der dritte Stand erklärt sich allein zur Nationalversammlung. Der König lässt den Sitzungssaal schließen. Was schwören die Abgeordneten am 20. Juni im Ballhaus?",
+        options: [
+            { text: "Nicht auseinanderzugehen, bis Frankreich eine Verfassung hat", correct: true, feedback: "Genau. Damit nimmt sich die Versammlung ein Recht, das ihr niemand gegeben hat." },
+            { text: "Dem König treu zu dienen", correct: false, feedback: "Das wäre das Gegenteil dessen, was dort passiert." },
+            { text: "Keine Steuern mehr zu zahlen", correct: false, feedback: "Nein. Es geht nicht ums Geld, sondern darum, wer die Gesetze macht." }
+        ]
+    },
+    {
+        type: "question",
+        question: "Welcher Begriff aus dem Wortspeicher ist mit dem Ballhausschwur erledigt?",
+        options: [
+            { text: "Absolutismus", correct: true, feedback: "Ja. Wenn eine gewählte Versammlung die Verfassung gibt, ist der König nicht mehr der alleinige Gesetzgeber." },
+            { text: "Ständegesellschaft", correct: false, feedback: "Die war schon am 17. Juni dran. Hier geht es um die Macht des Königs." },
+            { text: "Privilegien", correct: false, feedback: "Nein, die betreffen Adel und Geistlichkeit – hier geht es darum, wer die Gesetze macht." }
+        ]
+    },
+    {
+        type: "question",
+        question: "11. Juli: Der König entlässt Necker, Truppen ziehen um Paris zusammen. Am 14. Juli zieht die Menge zur Bastille. Warum ausgerechnet dorthin?",
+        options: [
+            { text: "Dort lagert das Pulver für die erbeuteten Gewehre", correct: true, feedback: "Richtig. 250 Fässer. Gefangene sitzen an diesem Tag nur sieben darin." },
+            { text: "Dort sitzen Hunderte politische Gefangene", correct: false, feedback: "Das ist die Legende. Es sind sieben, vier davon Falschmünzer." },
+            { text: "Dort wohnt der König", correct: false, feedback: "Nein, der sitzt in Versailles." }
+        ]
+    },
+    {
+        type: "text",
+        content: "Geschafft. Jetzt das Arbeitsblatt, Seite 3: Trag die sechs Begriffe ein – und entscheide, an welcher Station aus Protest eine Revolution wird."
+    }
+];
+
+const chatArea = document.getElementById('chat-area');
+const progressPill = document.getElementById('progress-pill');
+const TOTAL = snackData.filter(d => d.type === 'question').length;
+let step = 0;
+let qNum = 0;
+
+function nowTime() {
+    const d = new Date();
+    return d.getHours().toString().padStart(2,'0') + ':' + d.getMinutes().toString().padStart(2,'0');
+}
+
+function shuffle(arr) {
+    const a = [...arr];
+    for (let i = a.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [a[i], a[j]] = [a[j], a[i]];
+    }
+    return a;
+}
+
+function appendBubble(who, text, extraClass = '') {
+    const row = document.createElement('div');
+    row.className = `msg-row ${who}`;
+    const ticks = who === 'user' ? '<span class="ticks">✓✓</span>' : '';
+    row.innerHTML = `
+        <div class="bubble ${extraClass}">
+            <div>${text}</div>
+            <div class="meta-time">${nowTime()} ${ticks}</div>
+        </div>
+    `;
+    chatArea.appendChild(row);
+    window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
+}
+
+function nextStep() {
+    if (step >= snackData.length) {
+        progressPill.textContent = TOTAL + " / " + TOTAL + " ✓";
+        const btn = document.createElement('button');
+        btn.className = 'restart-btn';
+        btn.textContent = '↻ Chat neu starten';
+        btn.onclick = () => {
+            chatArea.innerHTML = '<div class="date-chip">HEUTE</div>';
+            step = 0; qNum = 0;
+            nextStep();
+        };
+        chatArea.appendChild(btn);
+        window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
+        return;
+    }
+
+    const item = snackData[step];
+    if (item.type === 'text') {
+        appendBubble('bot', item.content);
+        step++;
+        if (step < snackData.length) setTimeout(nextStep, 700);
+        else nextStep();
+    } else if (item.type === 'question') {
+        qNum++;
+        progressPill.textContent = `${qNum} / ${TOTAL}`;
+        appendBubble('bot', item.question);
+
+        const box = document.createElement('div');
+        box.className = 'options-box';
+        shuffle(item.options).forEach(opt => {
+            const b = document.createElement('button');
+            b.className = 'opt-btn';
+            b.textContent = opt.text;
+            b.onclick = () => {
+                appendBubble('user', opt.text);
+                if (opt.correct) {
+                    b.classList.add('picked-correct');
+                    Array.from(box.children).forEach(el => el.disabled = true);
+                    setTimeout(() => {
+                        appendBubble('bot', '✔ ' + opt.feedback, 'correct-reply');
+                        step++;
+                        setTimeout(nextStep, 900);
+                    }, 300);
+                } else {
+                    b.classList.add('picked-wrong');
+                    b.disabled = true;
+                    setTimeout(() => {
+                        appendBubble('bot', '✘ ' + opt.feedback, 'wrong-reply');
+                    }, 300);
+                }
+            };
+            box.appendChild(b);
+        });
+        chatArea.appendChild(box);
+        window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
+    }
+}
+
+function openQrModal() {
+    const urlInput = document.getElementById('qr-url');
+    urlInput.value = window.location.href.startsWith('http') ? window.location.href : 'https://uxux412.github.io/';
+    updateQr();
+    document.getElementById('qr-modal').style.display = 'flex';
+}
+function closeQrModal() {
+    document.getElementById('qr-modal').style.display = 'none';
+}
+function updateQr() {
+    const val = encodeURIComponent(document.getElementById('qr-url').value.trim() || 'https://uxux412.github.io/');
+    document.getElementById('qr-img').src = `https://api.qrserver.com/v1/create-qr-code/?size=240x240&color=0077b6&data=${val}`;
+}
+
+window.onload = nextStep;
+</script>
+</body>
+</html><!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>KS1 Learning Snack: Vom Absolutismus zur Revolution</title>
     <style>
         :root {
