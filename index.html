@@ -294,6 +294,7 @@
             .no-print { display: none !important; }
         }
     </style>
+<script src="qr.js"></script>
 </head>
 <body>
 
@@ -319,6 +320,7 @@
         </div>
         <div class="header-actions">
             <span class="status-pill" id="progress-pill">Start</span>
+            <a class="qr-btn" href="https://uxux412.github.io/unterricht2/index.html" style="text-decoration:none">Alle Materialien</a>
             <button class="qr-btn" onclick="openQrModal()">QR-Code</button>
         </div>
     </header>
@@ -553,8 +555,8 @@ function closeQrModal() {
     document.getElementById('qr-modal').style.display = 'none';
 }
 function updateQr() {
-    const val = encodeURIComponent(document.getElementById('qr-url').value.trim() || 'https://uxux412.github.io/');
-    document.getElementById('qr-img').src = `https://api.qrserver.com/v1/create-qr-code/?size=240x240&color=0077b6&data=${val}`;
+    const val = document.getElementById('qr-url').value.trim() || 'https://uxux412.github.io/';
+    document.getElementById('qr-img').src = QR.dataUrl(val, 6);
 }
 
 window.onload = nextStep;
