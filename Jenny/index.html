@@ -1,0 +1,135 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex, nofollow">
+<title>Ukulele-Griffe</title>
+<!-- Ordner „Jenny“: Der QR-Code zeigt auf https://uxux412.github.io/Jenny/ - Ordner nicht umbenennen oder verschieben. -->
+<style>:root{--ink:#1d1d1f;--muted:#5f6068;--line:#dedee3;--bg:#f4f4f6;--card:#fff;
+--g:#009a44;--r:#e30613;--y:#f4c300;--b:#0068b4}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--bg);color:var(--ink);
+font:16px/1.45 system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif}
+main{max-width:1000px;margin:0 auto;padding:22px 16px 48px}
+h1{font-size:30px;line-height:1.1;margin:0 0 10px;letter-spacing:-.01em}
+.streifen{display:flex;width:132px;height:6px;border-radius:3px;overflow:hidden;margin:0 0 18px}
+.streifen i{flex:1}
+.links{display:flex;flex-wrap:wrap;gap:8px;margin:0 0 6px}
+.links a{display:inline-block;padding:10px 16px;border-radius:999px;background:var(--card);
+border:1px solid var(--line);color:var(--ink);text-decoration:none;font-size:15px}
+.links a:active{background:#ececf0}
+.hinweis{color:var(--muted);font-size:14px;margin:14px 0 0}
+h2{font-size:19px;margin:24px 0 10px}
+.raster{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px}
+@media (min-width:640px){.raster{grid-template-columns:repeat(7,minmax(0,1fr));gap:12px}}
+.kachel{display:block;padding:6px 4px 4px;border:1px solid var(--line);border-radius:12px;
+background:var(--card);cursor:pointer;-webkit-tap-highlight-color:transparent}
+.kachel img{display:block;width:100%;height:auto}
+.kachel:focus-visible,.leiste :focus-visible,.zu:focus-visible{outline:3px solid var(--b);outline-offset:2px}
+.gross{position:fixed;inset:0;z-index:10;background:#fff;display:none;flex-direction:column}
+.gross.offen{display:flex}
+.bild{flex:1;min-height:0;display:flex;align-items:center;justify-content:center;padding:16px 12px 8px;touch-action:pan-y}
+.bild img{display:block;height:100%;max-width:100%;object-fit:contain}
+.zu{position:absolute;top:10px;right:10px;width:48px;height:48px;border-radius:50%;border:1px solid var(--line);
+background:#fff;font-size:22px;line-height:1;color:var(--ink);cursor:pointer}
+.leiste{display:flex;align-items:center;justify-content:space-between;gap:8px;
+padding:10px 12px calc(10px + env(safe-area-inset-bottom));border-top:1px solid var(--line)}
+.leiste button,.leiste a{font:inherit;font-size:16px;min-width:56px;padding:12px 18px;border-radius:999px;
+border:1px solid var(--line);background:var(--card);color:var(--ink);text-decoration:none;cursor:pointer;text-align:center}</style>
+</head>
+<body>
+<main>
+<h1>Ukulele-Griffe</h1>
+<div class="streifen" aria-hidden="true"><i style="background:var(--g)"></i><i style="background:var(--r)"></i><i style="background:var(--y)"></i><i style="background:var(--b)"></i></div>
+<div class="links">
+<a href="Ukulele-Griffe_alle.pdf">Alle Griffe als PDF</a>
+<a href="Ukulele-Griffe_Uebersicht.pdf">Alle auf einer Seite</a>
+</div>
+<p class="hinweis">Griff antippen zum Vergrößern.</p>
+<h2>Dur</h2>
+<div class="raster">
+<a class="kachel" href="svg/C.svg" data-pdf="pdf/Ukulele-Griff_C.pdf"><img src="svg/C.svg" alt="Griff C-Dur" width="360" height="757" loading="lazy"></a>
+<a class="kachel" href="svg/D.svg" data-pdf="pdf/Ukulele-Griff_D.pdf"><img src="svg/D.svg" alt="Griff D-Dur" width="360" height="757" loading="lazy"></a>
+<a class="kachel" href="svg/E.svg" data-pdf="pdf/Ukulele-Griff_E.pdf"><img src="svg/E.svg" alt="Griff E-Dur" width="360" height="757" loading="lazy"></a>
+<a class="kachel" href="svg/F.svg" data-pdf="pdf/Ukulele-Griff_F.pdf"><img src="svg/F.svg" alt="Griff F-Dur" width="360" height="757" loading="lazy"></a>
+<a class="kachel" href="svg/G.svg" data-pdf="pdf/Ukulele-Griff_G.pdf"><img src="svg/G.svg" alt="Griff G-Dur" width="360" height="757" loading="lazy"></a>
+<a class="kachel" href="svg/A.svg" data-pdf="pdf/Ukulele-Griff_A.pdf"><img src="svg/A.svg" alt="Griff A-Dur" width="360" height="757" loading="lazy"></a>
+<a class="kachel" href="svg/H.svg" data-pdf="pdf/Ukulele-Griff_H.pdf"><img src="svg/H.svg" alt="Griff H-Dur" width="360" height="757" loading="lazy"></a>
+</div>
+<h2>Moll</h2>
+<div class="raster">
+<a class="kachel" href="svg/Cm.svg" data-pdf="pdf/Ukulele-Griff_Cm.pdf"><img src="svg/Cm.svg" alt="Griff c-Moll (Cm)" width="360" height="757" loading="lazy"></a>
+<a class="kachel" href="svg/Dm.svg" data-pdf="pdf/Ukulele-Griff_Dm.pdf"><img src="svg/Dm.svg" alt="Griff d-Moll (Dm)" width="360" height="757" loading="lazy"></a>
+<a class="kachel" href="svg/Em.svg" data-pdf="pdf/Ukulele-Griff_Em.pdf"><img src="svg/Em.svg" alt="Griff e-Moll (Em)" width="360" height="757" loading="lazy"></a>
+<a class="kachel" href="svg/Fm.svg" data-pdf="pdf/Ukulele-Griff_Fm.pdf"><img src="svg/Fm.svg" alt="Griff f-Moll (Fm)" width="360" height="757" loading="lazy"></a>
+<a class="kachel" href="svg/Gm.svg" data-pdf="pdf/Ukulele-Griff_Gm.pdf"><img src="svg/Gm.svg" alt="Griff g-Moll (Gm)" width="360" height="757" loading="lazy"></a>
+<a class="kachel" href="svg/Am.svg" data-pdf="pdf/Ukulele-Griff_Am.pdf"><img src="svg/Am.svg" alt="Griff a-Moll (Am)" width="360" height="757" loading="lazy"></a>
+<a class="kachel" href="svg/Hm.svg" data-pdf="pdf/Ukulele-Griff_Hm.pdf"><img src="svg/Hm.svg" alt="Griff h-Moll (Hm)" width="360" height="757" loading="lazy"></a>
+</div>
+<h2>Sept</h2>
+<div class="raster">
+<a class="kachel" href="svg/C7.svg" data-pdf="pdf/Ukulele-Griff_C7.pdf"><img src="svg/C7.svg" alt="Griff C7 (Septakkord)" width="360" height="757" loading="lazy"></a>
+<a class="kachel" href="svg/D7.svg" data-pdf="pdf/Ukulele-Griff_D7.pdf"><img src="svg/D7.svg" alt="Griff D7 (Septakkord)" width="360" height="757" loading="lazy"></a>
+<a class="kachel" href="svg/E7.svg" data-pdf="pdf/Ukulele-Griff_E7.pdf"><img src="svg/E7.svg" alt="Griff E7 (Septakkord)" width="360" height="757" loading="lazy"></a>
+<a class="kachel" href="svg/F7.svg" data-pdf="pdf/Ukulele-Griff_F7.pdf"><img src="svg/F7.svg" alt="Griff F7 (Septakkord)" width="360" height="757" loading="lazy"></a>
+<a class="kachel" href="svg/G7.svg" data-pdf="pdf/Ukulele-Griff_G7.pdf"><img src="svg/G7.svg" alt="Griff G7 (Septakkord)" width="360" height="757" loading="lazy"></a>
+<a class="kachel" href="svg/A7.svg" data-pdf="pdf/Ukulele-Griff_A7.pdf"><img src="svg/A7.svg" alt="Griff A7 (Septakkord)" width="360" height="757" loading="lazy"></a>
+<a class="kachel" href="svg/H7.svg" data-pdf="pdf/Ukulele-Griff_H7.pdf"><img src="svg/H7.svg" alt="Griff H7 (Septakkord)" width="360" height="757" loading="lazy"></a>
+</div>
+</main>
+<div class="gross" id="gross" role="dialog" aria-modal="true" aria-label="Griff vergrößert">
+<button class="zu" id="zu" type="button" aria-label="Schließen">✕</button>
+<div class="bild" id="gross-flaeche"><img id="gross-bild" alt=""></div>
+<div class="leiste">
+<button id="zurueck" type="button" aria-label="Vorheriger Griff">‹</button>
+<a id="gross-pdf" href="#">PDF zum Drucken</a>
+<button id="weiter" type="button" aria-label="Nächster Griff">›</button>
+</div>
+</div>
+<script>(function(){
+  var kacheln=[].slice.call(document.querySelectorAll('.kachel'));
+  var box=document.getElementById('gross'), img=document.getElementById('gross-bild'),
+      pdf=document.getElementById('gross-pdf'), n=kacheln.length, idx=0;
+  function zeige(i){
+    idx=(i+n)%n; var k=kacheln[idx];
+    img.src=k.getAttribute('href'); img.alt=k.querySelector('img').alt;
+    pdf.href=k.getAttribute('data-pdf');
+  }
+  function oeffne(i){
+    zeige(i);
+    if(!box.classList.contains('offen')){
+      box.classList.add('offen'); document.documentElement.style.overflow='hidden';
+      try{history.pushState({gross:1},'');}catch(e){}
+      document.getElementById('zu').focus();
+    }
+  }
+  function schliesse(vonZurueck){
+    if(!box.classList.contains('offen')) return;
+    box.classList.remove('offen'); document.documentElement.style.overflow='';
+    if(!vonZurueck){try{if(history.state&&history.state.gross) history.back();}catch(e){}}
+    kacheln[idx].focus();
+  }
+  kacheln.forEach(function(k,i){
+    k.addEventListener('click',function(e){e.preventDefault(); oeffne(i);});
+  });
+  document.getElementById('zu').addEventListener('click',function(){schliesse(false);});
+  document.getElementById('zurueck').addEventListener('click',function(){zeige(idx-1);});
+  document.getElementById('weiter').addEventListener('click',function(){zeige(idx+1);});
+  window.addEventListener('popstate',function(){schliesse(true);});
+  document.addEventListener('keydown',function(e){
+    if(!box.classList.contains('offen')) return;
+    if(e.key==='Escape') schliesse(false);
+    else if(e.key==='ArrowLeft') zeige(idx-1);
+    else if(e.key==='ArrowRight') zeige(idx+1);
+  });
+  var x0=null,y0=null, flaeche=document.getElementById('gross-flaeche');
+  flaeche.addEventListener('touchstart',function(e){var t=e.changedTouches[0]; x0=t.clientX; y0=t.clientY;},{passive:true});
+  flaeche.addEventListener('touchend',function(e){
+    if(x0===null) return; var t=e.changedTouches[0], dx=t.clientX-x0, dy=t.clientY-y0; x0=null;
+    if(Math.abs(dx)>40 && Math.abs(dx)>Math.abs(dy)) zeige(idx+(dx<0?1:-1));
+  },{passive:true});
+})();</script>
+</body>
+</html>
