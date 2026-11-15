@@ -1,0 +1,3440 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta name="theme-color" content="#070b14" />
+  <meta name="description" content="Geschichtswächter: 8-Bit-Lernspiel zur deutschen Geschichte 1945–1949 (Kursstufe, 12.1)." />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="Geschichtswächter" />
+  <link rel="manifest" href="manifest.webmanifest" />
+  <link rel="icon" href="icon-192.png" type="image/png" />
+  <link rel="apple-touch-icon" href="icon-192.png" />
+  <title>Geschichtswächter</title>
+  <style>
+    /* ============================================================================
+       STYLESHEET (OFFLINE, HIGH-DPI, MOBIL)
+       ============================================================================ */
+    * {
+      box-sizing: border-box;
+      user-select: none;
+      -webkit-user-select: none;
+      -webkit-touch-callout: none;
+    }
+    textarea, input {
+      user-select: text;
+      -webkit-user-select: text;
+      -webkit-touch-callout: default;
+      font-size: 16px !important;
+    }
+    html, body { height: 100%; }
+    body {
+      margin: 0;
+      padding: 0;
+      background: #070b14;
+      color: #f8fafc;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      overflow: hidden;
+      overscroll-behavior: none;
+      -webkit-font-smoothing: antialiased;
+    }
+    .app-shell {
+      height: 100vh;
+      height: 100dvh;
+      padding: max(0.5rem, env(safe-area-inset-top)) max(0.5rem, env(safe-area-inset-right)) max(0.5rem, env(safe-area-inset-bottom)) max(0.5rem, env(safe-area-inset-left));
+    }
+    button { touch-action: manipulation; font-family: inherit; }
+    #gameFrame { min-height: 0; touch-action: none; }
+    .overlay-scroll { touch-action: pan-y; overscroll-behavior: contain; -webkit-overflow-scrolling: touch; }
+    :focus-visible { outline: 3px solid #fde047; outline-offset: 2px; }
+    .font-pixel {
+      font-weight: 800;
+      letter-spacing: 0.03em;
+      text-transform: uppercase;
+      font-variant-numeric: tabular-nums;
+    }
+    .tabular-nums { font-variant-numeric: tabular-nums; }
+    #gameCanvas, canvas.cutscene {
+      image-rendering: pixelated;
+      image-rendering: crisp-edges;
+      display: block;
+      width: 100%;
+    }
+    #gameCanvas { height: 100%; }
+    canvas.cutscene { height: auto; }
+    .retro-btn {
+      transition: transform 0.08s ease, box-shadow 0.08s ease, filter 0.12s ease;
+      box-shadow: 0 3px 0 rgba(0, 0, 0, 0.55);
+      cursor: pointer;
+    }
+    .retro-btn:hover { filter: brightness(1.08); }
+    .retro-btn:active { transform: translateY(2px); box-shadow: 0 1px 0 rgba(0, 0, 0, 0.55); }
+    .retro-btn:disabled { opacity: 0.45; cursor: not-allowed; }
+    @keyframes shake {
+      0%, 100% { transform: translate(0, 0); }
+      25% { transform: translate(-5px, 3px); }
+      50% { transform: translate(5px, -3px); }
+      75% { transform: translate(-3px, -2px); }
+    }
+    .shake-anim { animation: shake 0.22s ease-in-out; }
+
+    /* 80er-Jahre Neon-Rot Startbildschirm-Typografie */
+    .retro-red-title {
+      font-family: "Trebuchet MS", "Segoe UI", system-ui, sans-serif;
+      font-weight: 900;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: #fff1f2;
+      -webkit-text-stroke: 1.5px #ff1e38;
+      text-shadow: 0 2px 0 #881337, 0 0 12px rgba(255, 30, 56, 0.95), 0 0 26px rgba(225, 29, 72, 0.65);
+    }
+    .retro-red-subtitle {
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 0.09em;
+      color: #fda4af;
+      text-shadow: 0 1px 2px rgba(0, 0, 0, 0.9), 0 0 10px rgba(255, 30, 56, 0.55);
+    }
+    .retro-red-bar {
+      height: 3px;
+      background: linear-gradient(90deg, transparent 0%, #ff1e38 15%, #fb7185 50%, #ff1e38 85%, transparent 100%);
+      box-shadow: 0 0 10px #ff1e38, 0 0 20px #e11d48;
+      border-radius: 2px;
+    }
+    .retro-red-box {
+      background: radial-gradient(circle at 50% 20%, #1f0812 0%, #070a14 85%);
+      border: 2px solid #ff1e38;
+      box-shadow: 0 12px 36px rgba(0, 0, 0, 0.85), 0 0 24px rgba(255, 30, 56, 0.25);
+    }
+
+    /* Schlanke Layout-Helfer */
+    .hidden { display: none !important; }
+    .flex { display: flex; }
+    .grid { display: grid; }
+    .flex-col { flex-direction: column; }
+    .flex-wrap { flex-wrap: wrap; }
+    .items-center { align-items: center; }
+    .justify-between { justify-content: space-between; }
+    .justify-center { justify-content: center; }
+    .flex-1 { flex: 1 1 0%; }
+    .gap-1 { gap: 0.25rem; }
+    .gap-1\.5 { gap: 0.375rem; }
+    .gap-2 { gap: 0.5rem; }
+    .gap-2\.5 { gap: 0.625rem; }
+    .w-full { width: 100%; }
+    .max-w-5xl { max-width: 64rem; }
+    .max-w-2xl { max-width: 42rem; }
+    .max-w-lg { max-width: 32rem; }
+    .max-w-md { max-width: 28rem; }
+    .max-w-xl { max-width: 36rem; }
+    .mx-auto { margin-left: auto; margin-right: auto; }
+    .my-auto { margin-top: auto; margin-bottom: auto; }
+    .p-2 { padding: 0.5rem; }
+    .p-2\.5 { padding: 0.625rem; }
+    .p-3 { padding: 0.75rem; }
+    .p-3\.5 { padding: 0.875rem; }
+    .p-4 { padding: 1rem; }
+    .p-5 { padding: 1.25rem; }
+    .px-1 { padding-left: 0.25rem; padding-right: 0.25rem; }
+    .px-2 { padding-left: 0.5rem; padding-right: 0.5rem; }
+    .px-2\.5 { padding-left: 0.625rem; padding-right: 0.625rem; }
+    .px-3 { padding-left: 0.75rem; padding-right: 0.75rem; }
+    .px-3\.5 { padding-left: 0.875rem; padding-right: 0.875rem; }
+    .px-4 { padding-left: 1rem; padding-right: 1rem; }
+    .px-5 { padding-left: 1.25rem; padding-right: 1.25rem; }
+    .py-0\.5 { padding-top: 0.125rem; padding-bottom: 0.125rem; }
+    .py-1 { padding-top: 0.25rem; padding-bottom: 0.25rem; }
+    .py-1\.5 { padding-top: 0.375rem; padding-bottom: 0.375rem; }
+    .py-2 { padding-top: 0.5rem; padding-bottom: 0.5rem; }
+    .py-2\.5 { padding-top: 0.625rem; padding-bottom: 0.625rem; }
+    .py-3 { padding-top: 0.75rem; padding-bottom: 0.75rem; }
+    .py-3\.5 { padding-top: 0.875rem; padding-bottom: 0.875rem; }
+    .pl-2 { padding-left: 0.5rem; }
+    .mb-1 { margin-bottom: 0.25rem; }
+    .mb-1\.5 { margin-bottom: 0.375rem; }
+    .mb-2 { margin-bottom: 0.5rem; }
+    .mb-3 { margin-bottom: 0.75rem; }
+    .mb-4 { margin-bottom: 1rem; }
+    .mt-1 { margin-top: 0.25rem; }
+    .mt-1\.5 { margin-top: 0.375rem; }
+    .rounded { border-radius: 0.25rem; }
+    .rounded-lg { border-radius: 0.5rem; }
+    .rounded-xl { border-radius: 0.75rem; }
+    .rounded-2xl { border-radius: 1rem; }
+    .rounded-full { border-radius: 9999px; }
+    .border { border-width: 1px; border-style: solid; }
+    .border-2 { border-width: 2px; border-style: solid; }
+    .text-center { text-align: center; }
+    .text-left { text-align: left; }
+    .font-bold { font-weight: 700; }
+    .font-extrabold { font-weight: 800; }
+    .text-xs { font-size: 0.78rem; line-height: 1.15rem; }
+    .text-sm { font-size: 0.9rem; line-height: 1.35rem; }
+    .text-base { font-size: 1.02rem; line-height: 1.5rem; }
+    .text-lg { font-size: 1.18rem; line-height: 1.65rem; }
+    .relative { position: relative; }
+    .absolute { position: absolute; }
+    .inset-0 { top: 0; right: 0; bottom: 0; left: 0; }
+    .z-20 { z-index: 20; }
+    .z-30 { z-index: 30; }
+    .z-50 { z-index: 50; }
+    .overflow-hidden { overflow: hidden; }
+    .overflow-y-auto { overflow-y: auto; }
+    .pointer-events-none { pointer-events: none; }
+    .pointer-events-auto { pointer-events: auto; }
+    .grid-cols-2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .grid-cols-3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+    .grid-cols-4 { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+
+    /* Drag & Drop Tafelbild-Schloss Styling */
+    .dnd-card {
+      cursor: grab;
+      touch-action: none;
+      transition: transform 0.12s ease, box-shadow 0.12s ease, border-color 0.12s ease;
+    }
+    .dnd-card:active { cursor: grabbing; }
+    .dnd-card.selected-card {
+      border-color: #fde047 !important;
+      box-shadow: 0 0 14px rgba(253, 224, 71, 0.65);
+      transform: translateY(-2px);
+    }
+    .dnd-slot {
+      transition: background-color 0.15s ease, border-color 0.15s ease, transform 0.15s ease;
+      min-height: 44px;
+    }
+    .dnd-slot.drag-over {
+      border-color: #39ff14 !important;
+      background: rgba(57, 255, 20, 0.16) !important;
+      transform: scale(1.015);
+    }
+    .dnd-slot.slot-solved {
+      border-style: solid !important;
+      border-color: #10b981 !important;
+      background: rgba(16, 185, 129, 0.18) !important;
+    }
+    .max-w-3xl { max-width: 48rem; }
+    .mb-0\.5 { margin-bottom: 0.125rem; }
+    .mb-2\.5 { margin-bottom: 0.625rem; }
+    .mt-2 { margin-top: 0.5rem; }
+    .inline-block { display: inline-block; }
+
+    /* Quiz, Feedback, Auswertung */
+    #gateQuestionPanel { max-height: 100%; overflow-y: auto; touch-action: pan-y; overscroll-behavior: contain; }
+    #feedbackBanner { max-height: 75%; overflow-y: auto; touch-action: pan-y; overscroll-behavior: contain; }
+    .answer-btn { min-height: 56px; color: inherit; }
+    .answer-text { font-size: 0.9rem; line-height: 1.3; }
+    .answer-confirm { font-size: 11px; color: #fde047; margin-top: 4px; font-weight: 700; }
+    .quote-box { border-left: 3px solid #fbbf24; background: rgba(251, 191, 36, 0.08); padding: 0.5rem 0.75rem; border-radius: 0.5rem; margin-bottom: 0.6rem; font-style: italic; color: #fef3c7; font-size: 0.95rem; line-height: 1.4; }
+    .quote-src { display: block; font-style: normal; font-size: 11.5px; color: #cbd5e1; margin-top: 4px; }
+    .review-list { text-align: left; max-height: 240px; overflow-y: auto; touch-action: pan-y; overscroll-behavior: contain; }
+    .review-item { border: 1px solid #334155; border-radius: 0.6rem; padding: 0.5rem 0.65rem; margin-bottom: 0.4rem; background: #090d16; font-size: 13px; line-height: 1.4; }
+    .badge-chip { display: inline-block; padding: 2px 8px; border-radius: 999px; border: 1px solid #fbbf24; color: #fde68a; background: rgba(251, 191, 36, 0.12); font-size: 11.5px; font-weight: 800; margin: 2px; }
+    .controls button { min-height: 56px; }
+    .site-footer { font-size: 11px; color: #94a3b8; text-align: center; line-height: 1.4; }
+    .site-footer a { color: #7dd3fc; }
+    .dnd-slot, .dnd-card { font: inherit; text-align: left; overflow-wrap: anywhere; hyphens: auto; -webkit-hyphens: auto; min-width: 0; }
+    .dnd-slot { width: 100%; }
+    .only-touch { display: none !important; }
+    .rotate-hint { display: none; position: fixed; inset: 0; z-index: 200; background: #070b14; color: #f8fafc; align-items: center; justify-content: center; text-align: center; padding: 2rem; font-weight: 800; font-size: 1.1rem; line-height: 1.5; }
+    #editorStatusMsg, #pinMsg { white-space: pre-line; }
+
+    @media (max-width: 600px) {
+      #gateAnswersGrid { grid-template-columns: 1fr !important; }
+      .answer-text { font-size: 14px; }
+      .answer-btn { min-height: 48px; }
+      #hudOverlay { padding: 0.4rem; }
+      #hudOverlay.gate-open .hud-top { display: none; }
+      .hud-top { gap: 0.3rem !important; }
+      .hud-top .rounded-xl { padding: 0.2rem 0.45rem !important; }
+      #hudDistanceText { font-size: 0.85rem; }
+      .hide-narrow { display: none !important; }
+    }
+    @media (hover: none) and (pointer: coarse) {
+      .key-hint, .only-desktop { display: none !important; }
+      .only-touch { display: block !important; }
+      .retro-btn { min-height: 44px; min-width: 44px; }
+    }
+    @media (orientation: landscape) and (max-height: 500px) and (pointer: coarse) {
+      .rotate-hint { display: flex; }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      .shake-anim { animation: none; }
+      .retro-btn { transition: none; }
+    }
+  </style>
+</head>
+<body>
+  <div class="rotate-hint" role="alert">📱 ↻<br>Bitte dreh dein Handy ins Hochformat.</div>
+
+  <div class="app-shell max-w-5xl mx-auto flex flex-col gap-2">
+
+    <!-- KOPFLEISTE: KS1-ZEICHEN, TITEL, TON -->
+    <header class="flex flex-wrap items-center justify-between gap-2 rounded-xl px-3 py-2 border" style="background: #0f172a; border-color: #334155;">
+      <div class="flex items-center gap-2.5">
+        <div class="px-2.5 py-1 rounded-lg flex items-center border hide-narrow" style="background: #090d16; border-color: #fbbf24;" aria-hidden="true">
+          <svg viewBox="0 0 128 44" style="height: 26px; width: auto;">
+            <text x="4" y="32" font-family="system-ui, sans-serif" font-weight="900" font-size="28" fill="#38bdf8">KS</text>
+            <text x="46" y="32" font-family="system-ui, sans-serif" font-weight="900" font-size="28" fill="#fbbf24">1</text>
+            <polygon points="72,35 80,9 89,9 81,35" fill="#38bdf8"/>
+            <polygon points="88,35 96,9 105,9 97,35" fill="#ff2a85"/>
+            <polygon points="104,35 112,9 121,9 113,35" fill="#39ff14"/>
+          </svg>
+        </div>
+        <div>
+          <h1 class="font-bold text-sm" style="margin: 0; color: #ff1e38; text-shadow: 0 0 8px rgba(255,30,56,0.5);">GESCHICHTSWÄCHTER</h1>
+          <div class="hide-narrow" style="font-size: 11px; color: #cbd5e1;">Die Quellen-Chronik • 1945–1949 • Kursstufe (12.1)</div>
+        </div>
+      </div>
+
+      <div class="flex flex-wrap items-center gap-1.5">
+        <button id="fullscreenBtn" type="button" class="hidden retro-btn px-3 py-1.5 rounded-lg text-xs font-bold border" style="background: #1e293b; border-color: #475569; color: #f8fafc;" aria-label="Vollbild umschalten">⛶</button>
+        <button id="soundToggleBtn" type="button" onclick="sound.toggle()" class="retro-btn px-3 py-1.5 rounded-lg text-xs font-bold border" style="background: #1e293b; border-color: #475569; color: #f8fafc;" aria-pressed="true">🔊 Ton</button>
+        <div id="teacherBar" class="hidden items-center gap-1.5 pl-2" style="border-left: 2px solid #ef4444;">
+          <button type="button" onclick="app.openEditor()" class="retro-btn px-2.5 py-1.5 rounded-lg text-xs font-bold border" style="background: rgba(127, 29, 29, 0.85); border-color: #ef4444; color: #fecaca;">🛠️ Fragen-Editor</button>
+          <button type="button" onclick="app.lockTeacherMode()" class="retro-btn px-2 py-1.5 rounded-lg text-xs font-bold border" style="background: #1e293b; border-color: #475569; color: #cbd5e1;" aria-label="Lehrermodus sperren">🔒</button>
+        </div>
+      </div>
+    </header>
+
+    <!-- HAUPT-SPIELFELD (CANVAS + HUD + OVERLAYS) -->
+    <main id="gameFrame" class="relative flex-1 rounded-2xl overflow-hidden border-2" style="background: #040711; border-color: #334155;">
+      <canvas id="gameCanvas" role="img" aria-label="Spielfeld: Dein Gleiter bzw. der Wächter bewegt sich auf drei Spuren"></canvas>
+
+      <!-- SPIEL-HUD -->
+      <div id="hudOverlay" class="hidden absolute inset-0 z-20 pointer-events-none p-3 flex flex-col justify-between gap-2">
+        <div class="hud-top flex flex-wrap items-center justify-between gap-2">
+          <div class="flex items-center gap-2 px-3 py-1.5 rounded-xl border pointer-events-auto" style="background: rgba(15, 23, 42, 0.92); border-color: #475569;">
+            <span id="hudPhaseIcon" class="text-base" aria-hidden="true">🚀</span>
+            <div>
+              <div id="hudLevelTitle" class="font-bold text-xs hide-narrow" style="color: #38bdf8;">Stufe 1: Weltall</div>
+              <div id="hudSubInfo" class="text-xs tabular-nums hide-narrow" style="color: #cbd5e1;"></div>
+            </div>
+            <button type="button" onclick="game.togglePause()" class="retro-btn px-2 py-1 rounded text-xs font-bold border" style="background: #1e293b; border-color: #475569; color: #f8fafc;" aria-label="Pause">⏸</button>
+          </div>
+
+          <div class="flex items-center gap-2.5 px-3.5 py-1.5 rounded-xl border-2 pointer-events-auto" style="background: rgba(9, 13, 22, 0.94); border-color: #fbbf24;">
+            <div class="flex items-center gap-1.5">
+              <span aria-hidden="true">🚧</span>
+              <span id="hudDistanceText" class="font-pixel text-base" style="color: #ffffff;">Tor 0 / 4</span>
+            </div>
+            <div id="hudKersStatus" class="px-2 py-0.5 rounded text-xs font-bold tabular-nums hide-narrow" style="background: rgba(56, 189, 248, 0.2); color: #7dd3fc;">175 km/h</div>
+          </div>
+
+          <div class="flex items-center gap-1.5 pointer-events-auto">
+            <div class="px-2.5 py-1.5 rounded-xl border flex items-center gap-1.5" style="background: rgba(15, 23, 42, 0.92); border-color: #39ff14;">
+              <span id="hudScoreText" class="text-xs tabular-nums font-bold" style="color: #fde68a;">⭐ 0 P</span>
+              <span style="color:#39ff14; font-weight:800;" class="text-xs tabular-nums" id="hudComboText">🔥 x1</span>
+            </div>
+            <div id="hudShieldBox" class="px-3 py-1.5 rounded-xl border-2 flex items-center gap-1.5" style="background: rgba(15, 23, 42, 0.92); border-color: #38bdf8;">
+              <span id="hudShieldIcons" class="text-sm" aria-label="Schilde">🛡️🛡️🛡️</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- FRAGE-TOR PANEL -->
+        <div id="gateQuestionPanel" class="hidden mx-auto w-full max-w-2xl rounded-2xl p-4 border-2 pointer-events-auto" style="background: rgba(15, 23, 42, 0.97); border-color: #fbbf24; box-shadow: 0 12px 30px rgba(0,0,0,0.8);" role="group" aria-labelledby="gateQuestionText">
+          <div class="flex flex-wrap items-center justify-between gap-2 mb-2">
+            <div class="flex flex-wrap items-center gap-2">
+              <span id="gateBadge" class="px-2.5 py-0.5 rounded text-xs font-bold" style="background: rgba(251, 191, 36, 0.2); color: #fde68a; border: 1px solid #fbbf24;">SCHRANKE</span>
+              <span id="gateQuestionCounter" class="text-xs font-bold hide-narrow" style="color: #94a3b8;"></span>
+            </div>
+            <div class="flex items-center gap-2">
+              <button id="hintBtn" type="button" onclick="game.useHint()" class="retro-btn px-2.5 py-1 rounded-lg text-xs font-bold border" style="background: rgba(245, 158, 11, 0.2); border-color: #f59e0b; color: #fde68a;">
+                💡 Joker −1 (<span id="hudHintCount">3</span>)<span class="key-hint"> [T]</span>
+              </button>
+              <div class="px-2.5 py-1 rounded-lg border flex items-center gap-1" style="background: #090d16; border-color: #334155;">
+                <span aria-hidden="true">⏳</span>
+                <b id="gateTimerText" class="font-bold text-xs tabular-nums" style="color: #fbbf24;">20.0s</b>
+              </div>
+            </div>
+          </div>
+
+          <div id="gateQuoteBox" class="quote-box hidden"></div>
+          <p id="gateQuestionText" class="text-base font-bold mb-3" style="color: #ffffff; line-height: 1.35; margin-top: 0;" aria-live="polite"></p>
+          <div class="w-full rounded-full overflow-hidden mb-3" style="height: 7px; background: #1e293b;">
+            <div id="gateTimerBar" style="height: 100%; width: 100%; background: linear-gradient(90deg, #10b981, #fbbf24, #ef4444);"></div>
+          </div>
+          <div id="gateAnswersGrid" class="grid grid-cols-3 gap-2"></div>
+          <div class="only-desktop text-xs mt-1.5" style="color: #94a3b8;">Spur wählen mit ◀ ▶ oder Taste 1–4 · bestätigen mit Leertaste / Enter</div>
+          <div class="only-touch text-xs mt-1.5" style="color: #94a3b8;">Antwort antippen · nochmal tippen = bestätigen</div>
+        </div>
+
+        <!-- FEEDBACK-BANNER -->
+        <div id="feedbackBanner" class="hidden mx-auto max-w-xl w-full rounded-xl px-4 py-3 border-2 pointer-events-auto" style="background: rgba(15, 23, 42, 0.97);" role="status" aria-live="polite">
+          <div id="feedbackTitle" class="font-bold text-sm mb-1.5 text-center"></div>
+          <div id="feedbackExplanation" class="text-sm" style="color: #e2e8f0; line-height: 1.45; white-space: pre-line;"></div>
+          <button id="feedbackContinueBtn" type="button" onclick="game.continueAfterFeedback()" class="retro-btn w-full mt-2 py-2.5 rounded-xl font-extrabold text-sm" style="background: #10b981; color: #04131a; border: none;">WEITER ▶<span class="key-hint"> [Leertaste]</span></button>
+        </div>
+      </div>
+
+      <!-- STARTMENÜ -->
+      <div id="startOverlay" class="absolute inset-0 z-30 flex items-center justify-center p-3 overflow-y-auto overlay-scroll" style="background: rgba(5, 6, 13, 0.92);">
+        <div class="max-w-lg w-full rounded-2xl p-5 border-2 my-auto text-center retro-red-box">
+          <div class="flex flex-wrap items-center justify-between gap-2 mb-3">
+            <span class="px-2.5 py-1 rounded-full text-xs font-bold" style="background: rgba(255, 30, 56, 0.16); color: #fda4af; border: 1px solid #ff1e38;">🏝️ WÄCHTERINSEL ➔ KS1</span>
+            <span id="startBestTimeBadge" class="text-xs font-bold tabular-nums" style="color: #fbbf24;">🏆 Rekord: 0 P</span>
+          </div>
+
+          <div class="mb-3 px-1 w-full overflow-hidden">
+            <div class="retro-red-bar mb-1.5"></div>
+            <div class="retro-red-title w-full" style="font-size: clamp(1.2rem, 6vw, 1.75rem); line-height: 1.15; white-space: nowrap;">GESCHICHTSWÄCHTER</div>
+            <div class="retro-red-subtitle text-xs mt-1">DIE QUELLEN-CHRONIK • 1945–1949</div>
+            <div class="retro-red-bar mt-1.5"></div>
+          </div>
+
+          <div class="rounded-xl p-3.5 mb-3 border" style="background: rgba(9, 13, 22, 0.9); border-color: rgba(255, 30, 56, 0.45);">
+            <p class="text-base font-bold mb-1.5" style="color: #ffffff; line-height: 1.35; margin-top: 0;">
+              Auf der <span style="color: #39ff14;">Wächterinsel des Wissens</span> fehlt die <span style="color: #fbbf24;">Quellen-Chronik</span>!
+            </p>
+            <p class="text-sm font-bold" style="color: #cbd5e1; line-height: 1.35; margin: 0;">
+              Flieg durchs Asteroidenfeld zur Erde, lande an der <span style="color: #38bdf8;">KS1</span> und hol sie zurück. Punkte gibt es vor allem für richtige Antworten – deine Fehler siehst du am Ende mit Erklärung.
+            </p>
+          </div>
+
+          <div class="only-desktop grid grid-cols-2 gap-2 mb-3 text-sm">
+            <div class="p-2.5 rounded-xl border font-bold" style="background: #090d16; border-color: #334155; color: #f8fafc;">◀ ▶ / A D <span style="color: #38bdf8;">Spur</span></div>
+            <div class="p-2.5 rounded-xl border font-bold" style="background: #090d16; border-color: #334155; color: #f8fafc;">Leertaste <span style="color: #39ff14;">Sprung, 2× Sprung</span></div>
+            <div class="p-2.5 rounded-xl border font-bold" style="background: #090d16; border-color: #334155; color: #f8fafc;">F <span style="color: #fde047;">Laser (3 Ladungen)</span></div>
+            <div class="p-2.5 rounded-xl border font-bold" style="background: #090d16; border-color: #334155; color: #f8fafc;">P / Esc <span style="color: #cbd5e1;">Pause</span></div>
+          </div>
+          <div class="only-touch p-2.5 rounded-xl border font-bold text-sm mb-3" style="background: #090d16; border-color: #334155; color: #f8fafc; line-height: 1.45;">
+            Links / rechts aufs Spielfeld tippen = <span style="color: #38bdf8;">Spur wechseln</span><br>
+            Mitte tippen = <span style="color: #39ff14;">springen</span> · ⚡ unten = <span style="color: #fde047;">Laser</span>
+          </div>
+          <div id="iosMuteHint" class="hidden text-xs mb-3" style="color: #94a3b8;">🔈 Kein Ton? Prüfe den Stummschalter an der Seite deines iPhones.</div>
+
+          <button type="button" onclick="game.start()" class="retro-btn w-full py-3.5 px-5 rounded-xl font-extrabold text-base border-2" style="background: linear-gradient(90deg, #e11d48, #ff1e38); border-color: #fecdd3; color: #ffffff; box-shadow: 0 0 20px rgba(255, 30, 56, 0.5);">
+            ▶ MISSION STARTEN
+          </button>
+        </div>
+      </div>
+
+      <!-- STUFEN-WECHSEL OVERLAY (LANDUNG AN DER KS1) -->
+      <div id="phaseTransitionOverlay" class="hidden absolute inset-0 z-30 flex items-center justify-center p-3 overflow-y-auto overlay-scroll" style="background: rgba(7, 8, 20, 0.94);">
+        <div class="max-w-lg w-full rounded-2xl p-4 border-2 text-center my-auto" style="background: #121026; border-color: #ff1e38; box-shadow: 0 0 35px rgba(255, 30, 56, 0.35);">
+          <div class="flex items-center justify-between mb-2">
+            <span class="px-2.5 py-0.5 rounded text-xs font-bold" style="background: rgba(255, 30, 56, 0.18); color: #fda4af; border: 1px solid #ff1e38;">STUFE 1 ➔ ZWISCHENSCHRITT 1</span>
+            <button type="button" onclick="game.replayLandingCutscene()" class="retro-btn px-2 py-0.5 rounded text-xs border" style="background: #1e1b38; border-color: #475569; color: #cbd5e1;">🔄 Nochmal</button>
+          </div>
+          <div class="rounded-xl overflow-hidden border-2 mb-3" style="border-color: #38bdf8; background: #050714;">
+            <canvas id="landingCutsceneCanvas" class="cutscene" width="440" height="210" aria-hidden="true"></canvas>
+          </div>
+          <h3 id="transitionTitle" class="font-extrabold text-base mb-1.5" style="color: #fbbf24; margin-top: 0;">LANDUNG AN DER KS1!</h3>
+          <p id="transitionDesc" class="text-sm mb-3" style="color: #cbd5e1; line-height: 1.4;"></p>
+          <button type="button" onclick="game.openBoardLock(1)" class="retro-btn w-full py-3 rounded-xl font-extrabold text-sm border-2" style="background: linear-gradient(90deg, #e11d48, #f59e0b); border-color: #fde047; color: #ffffff;">
+            🔒 Eingangstür aufschließen (Tafelbild-Schloss 1) ▶
+          </button>
+        </div>
+      </div>
+
+      <!-- TAFELBILD-SCHLOSS OVERLAY -->
+      <div id="boardLockOverlay" class="hidden absolute inset-0 z-30 flex items-center justify-center p-2.5 overflow-y-auto overlay-scroll" style="background: rgba(5, 7, 18, 0.96);">
+        <div class="max-w-3xl w-full rounded-2xl p-3.5 border-2 my-auto" style="background: #0d1224; border-color: #fbbf24; box-shadow: 0 0 36px rgba(251, 191, 36, 0.25);">
+          <div class="flex flex-wrap items-center justify-between gap-2 mb-2">
+            <div>
+              <span id="boardLockBadge" class="px-2 py-0.5 rounded text-xs font-bold" style="background: rgba(251, 191, 36, 0.2); color: #fde047; border: 1px solid #fbbf24;">🔒 TAFELBILD-SCHLOSS</span>
+              <h3 id="boardLockTitle" class="font-extrabold text-base mt-1" style="color: #ffffff; margin-bottom: 0;"></h3>
+            </div>
+            <div class="px-3 py-1 rounded-xl border text-xs font-bold tabular-nums" style="background: #090d16; border-color: #38bdf8; color: #7dd3fc;">
+              Schlösser: <span id="boardLockProgress" style="color: #39ff14;">0 / 5</span>
+            </div>
+          </div>
+
+          <div class="rounded-xl overflow-hidden border mb-2.5 hide-narrow" style="border-color: #334155; background: #050714;">
+            <canvas id="boardLockSceneCanvas" class="cutscene" width="640" height="96" aria-hidden="true"></canvas>
+          </div>
+
+          <div id="boardLockStructure" class="mb-2.5"></div>
+
+          <div id="boardLockHintBox" class="rounded-lg px-3 py-1.5 mb-2.5 text-xs font-bold border text-center" style="background: rgba(15, 23, 42, 0.95); border-color: #334155; color: #cbd5e1;" role="status" aria-live="polite"></div>
+
+          <div id="boardLockCardTray" class="flex flex-wrap gap-1.5 justify-center p-2.5 rounded-xl border mb-2.5" style="background: #070a14; border-color: #334155; min-height: 56px;"></div>
+
+          <button id="boardLockContinueBtn" type="button" onclick="game.completeBoardLock()" class="hidden retro-btn w-full py-3 rounded-xl font-extrabold text-sm border-2" style="background: linear-gradient(90deg, #059669, #10b981); border-color: #6ee7b7; color: #ffffff;">
+            🔓 TÜR ENTSICHERT! WEITER ▶
+          </button>
+        </div>
+      </div>
+
+      <!-- PAUSE OVERLAY -->
+      <div id="pauseOverlay" class="hidden absolute inset-0 z-30 flex items-center justify-center p-4" style="background: rgba(7, 11, 20, 0.88);">
+        <div class="max-w-md w-full rounded-2xl p-5 border-2 text-center" style="background: #0f172a; border-color: #475569;">
+          <h3 class="font-extrabold text-lg mb-3" style="color: #38bdf8; margin-top: 0;">Spiel pausiert</h3>
+          <div class="flex flex-col gap-2">
+            <button id="pauseResumeBtn" type="button" onclick="game.togglePause()" class="retro-btn py-2.5 rounded-xl font-bold text-sm" style="background: #10b981; color: #04131a; border: none;">▶ Weiter<span class="key-hint"> [P]</span></button>
+            <button type="button" onclick="game.start()" class="retro-btn py-2.5 rounded-xl font-bold text-sm border" style="background: #1e293b; border-color: #475569; color: #f8fafc;">🔄 Neu starten</button>
+            <button type="button" onclick="game.backToMenu()" class="retro-btn py-2 rounded-xl font-bold text-xs border" style="background: #090d16; border-color: #334155; color: #cbd5e1;">🏠 Zum Startmenü</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- ZIEL-EINLAUF / AUSWERTUNG -->
+      <div id="endOverlay" class="hidden absolute inset-0 z-30 flex items-center justify-center p-3 overflow-y-auto overlay-scroll" style="background: rgba(7, 8, 20, 0.94);">
+        <div class="max-w-lg w-full rounded-2xl p-4 border-2 text-center my-auto" style="background: #121026; border-color: #fbbf24; box-shadow: 0 0 35px rgba(251, 191, 36, 0.3);">
+          <div id="endEmoji" class="text-xs font-bold mb-1" style="color: #39ff14;">✨ FINALE IN DER KS1 ✨</div>
+          <h3 id="endTitle" class="font-extrabold text-lg mb-1" style="color: #fbbf24; margin-top: 0;"></h3>
+          <p id="endSubtitle" class="text-sm mb-3" style="color: #cbd5e1;"></p>
+
+          <div class="rounded-xl overflow-hidden border-2 mb-3" style="border-color: #fbbf24; background: #090818;">
+            <canvas id="bookFinaleCanvas" class="cutscene" width="440" height="195" aria-hidden="true"></canvas>
+          </div>
+
+          <div class="grid grid-cols-3 gap-2 mb-2">
+            <div class="p-2.5 rounded-xl border" style="background: #090d16; border-color: #10b981;">
+              <div id="endScoreText" class="font-extrabold text-base tabular-nums" style="color: #34d399;">0</div>
+              <div style="font-size: 11px; color: #cbd5e1;">Punkte</div>
+            </div>
+            <div class="p-2.5 rounded-xl border" style="background: #090d16; border-color: #334155;">
+              <div id="endCorrectText" class="font-extrabold text-base tabular-nums" style="color: #38bdf8;">0 / 0</div>
+              <div style="font-size: 11px; color: #cbd5e1;">Richtige Antworten</div>
+            </div>
+            <div class="p-2.5 rounded-xl border" style="background: #090d16; border-color: #fbbf24;">
+              <div id="endBestText" class="font-extrabold text-base tabular-nums" style="color: #fbbf24;">0</div>
+              <div style="font-size: 11px; color: #cbd5e1;">Rekord</div>
+            </div>
+          </div>
+          <div id="endBreakdown" class="text-xs mb-2" style="color: #cbd5e1;"></div>
+          <div id="endBadges" class="mb-3"></div>
+
+          <div id="endReviewWrap" class="hidden mb-3">
+            <div class="font-bold text-sm mb-1.5" style="color: #fca5a5; text-align: left;">📋 Das solltest du dir nochmal anschauen</div>
+            <div id="endReviewList" class="review-list"></div>
+          </div>
+          <div id="endJudgeWrap" class="hidden mb-3">
+            <div class="font-bold text-sm mb-1.5" style="color: #c4b5fd; text-align: left;">🗳️ Deine Positionen – zum Diskutieren im Unterricht</div>
+            <div id="endJudgeList" class="review-list"></div>
+          </div>
+
+          <div class="flex flex-col gap-2">
+            <button type="button" onclick="game.start()" class="retro-btn w-full py-3.5 rounded-xl font-extrabold text-base border-2" style="background: linear-gradient(90deg, #e11d48, #ff1e38); border-color: #fecdd3; color: #ffffff;">🔄 NOCHMAL SPIELEN</button>
+            <button type="button" onclick="game.backToMenu()" class="retro-btn w-full py-2 rounded-xl font-bold text-xs border" style="background: #090d16; border-color: #334155; color: #cbd5e1;">🏠 Zum Startmenü</button>
+          </div>
+        </div>
+      </div>
+    </main>
+
+    <!-- STEUERUNG UNTEN -->
+    <footer class="controls grid gap-2" style="grid-template-columns: 1fr 1.4fr 1fr 1fr;">
+      <button type="button" onmousedown="event.preventDefault()" onclick="game.moveLane(-1)" class="retro-btn py-2 rounded-xl border font-bold text-sm flex items-center justify-center gap-1" style="background: #1e293b; border-color: #475569; color: #f8fafc;" aria-label="Spur nach links"><span aria-hidden="true">◀</span><span class="key-hint">Links [A]</span></button>
+      <button type="button" onmousedown="event.preventDefault()" onclick="game.handlePrimaryAction()" class="retro-btn py-2 rounded-xl border font-extrabold text-sm flex items-center justify-center gap-1" style="background: #0284c7; border-color: #7dd3fc; color: #ffffff;"><span id="primaryActionLabel">🦘 SPRUNG</span><span class="key-hint"> [Leer]</span></button>
+      <button id="kersBtn" type="button" onmousedown="event.preventDefault()" onclick="game.triggerKersBoost()" class="retro-btn py-2 rounded-xl border font-bold text-sm flex items-center justify-center gap-1" style="background: #1e293b; border-color: #fbbf24; color: #fde68a;"><span id="kersBtnLabel">⚡ 3</span><span class="key-hint"> [F]</span></button>
+      <button type="button" onmousedown="event.preventDefault()" onclick="game.moveLane(1)" class="retro-btn py-2 rounded-xl border font-bold text-sm flex items-center justify-center gap-1" style="background: #1e293b; border-color: #475569; color: #f8fafc;" aria-label="Spur nach rechts"><span class="key-hint">Rechts [D]</span><span aria-hidden="true">▶</span></button>
+    </footer>
+    <div class="site-footer">Ohne Gewähr · Code: MIT-Lizenz · Inhalte: CC BY 4.0, Christopher Deutsch · <a href="https://uxux412.github.io/unterricht2/impressum/" target="_blank" rel="noopener">Impressum &amp; Datenschutz</a></div>
+  </div>
+
+  <!-- LEHRER-PIN -->
+  <div id="pinModal" class="hidden inset-0 z-50 flex items-center justify-center p-3" style="background: rgba(0, 0, 0, 0.85); position: fixed;" role="dialog" aria-modal="true" aria-labelledby="pinTitle">
+    <div class="max-w-md w-full rounded-2xl p-4 border-2" style="background: #0f172a; border-color: #ef4444;">
+      <h3 id="pinTitle" class="font-extrabold text-base mb-1.5" style="color: #ffffff; margin-top: 0;">🔐 Lehrer-Studio</h3>
+      <p id="pinDesc" class="text-sm mb-2" style="color: #cbd5e1;"></p>
+      <input id="pinInput" type="password" inputmode="numeric" autocomplete="off" aria-labelledby="pinDesc" class="w-full rounded-xl p-3 border mb-2" style="background: #090d16; border-color: #475569; color: #f8fafc;" />
+      <div id="pinMsg" class="text-xs mb-2" style="color: #fca5a5;"></div>
+      <div class="flex gap-2">
+        <button type="button" onclick="app.submitPin()" class="retro-btn px-4 py-2 rounded-xl text-sm font-bold" style="background: #10b981; color: #04131a; border: none;">OK</button>
+        <button type="button" onclick="app.closeModal('pinModal')" class="retro-btn px-3 py-2 rounded-xl text-sm border" style="background: #1e293b; border-color: #475569; color: #cbd5e1;">Abbrechen</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- LEHRER-FRAGEN-STUDIO (NUR ÜBER ?lehrer=1 UND PIN) -->
+  <div id="editorModal" class="hidden inset-0 z-50 flex items-center justify-center p-3" style="background: rgba(0, 0, 0, 0.85); position: fixed;" role="dialog" aria-modal="true" aria-labelledby="editorTitle">
+    <div class="max-w-2xl w-full rounded-2xl p-4 border-2 overflow-y-auto overlay-scroll" style="background: #0f172a; border-color: #ef4444; max-height: 90vh; max-height: 90dvh;">
+      <div class="flex items-center justify-between mb-2">
+        <div>
+          <span class="text-xs font-bold" style="color: #f87171;">LEHRER-STUDIO</span>
+          <h3 id="editorTitle" class="font-pixel text-base" style="color: #ffffff; margin: 0;">🛠️ Fragen-Katalog bearbeiten</h3>
+        </div>
+        <button type="button" onclick="app.closeModal('editorModal')" class="retro-btn px-3 py-1 rounded-lg text-xs font-bold border" style="background: #1e293b; border-color: #475569; color: #f8fafc;">✕ Schließen<span class="key-hint"> [Esc]</span></button>
+      </div>
+      <pre class="p-2.5 rounded-xl border text-xs mb-2" style="background: #090d16; border-color: #334155; color: #cbd5e1; white-space: pre-wrap; margin-top: 0;"># Levelname | Bedenkzeit in Sekunden   (1. Level = Weltall, alle weiteren = Schulgang)
+? Fragetext
+> „Quellenzitat“ – Quelle, Jahr          (optional)
+@ sensibel                               (optional: neutrales Feedback, kein Jubel)
++ Richtige Antwort                       (genau eine)
+- Falsche Antwort                        (2–3 Stück)
+~ Position                               (nur Urteilsfragen: 2–4, ohne „+“)
+! Erklärung</pre>
+      <textarea id="questionDslInput" rows="12" aria-label="Fragenkatalog" class="w-full rounded-xl p-3 border mb-2" style="background: #090d16; border-color: #475569; color: #f8fafc; font-family: monospace;"></textarea>
+      <div id="editorStatusMsg" class="text-xs mb-2" style="color: #6ee7b7;"></div>
+      <div class="flex flex-wrap gap-2">
+        <button type="button" onclick="app.saveCustomQuestions()" class="retro-btn px-4 py-2 rounded-xl text-xs font-bold" style="background: #10b981; color: #04131a; border: none;">💾 Prüfen &amp; Speichern</button>
+        <button type="button" onclick="app.restoreDefaultQuestions()" class="retro-btn px-3 py-2 rounded-xl text-xs border" style="background: #1e293b; border-color: #475569; color: #cbd5e1;">↩ Standard (12.1: 1945–1949)</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    /* ============================================================================
+       1. FRAGENKATALOG (KURSSTUFE BW, 12.1 „WEST- UND OSTEUROPA NACH 1945“: 1945–1949)
+       Wissensfragen mit plausiblen Fehlvorstellungen, Quellenfragen (>), Urteilsfragen (~)
+       ============================================================================ */
+    const DEFAULT_QUESTIONS_DSL = `# Stufe 1: Kriegsende, Besatzung & Potsdamer Konferenz (1945) | 22
+? Wie erlebten die Menschen in Deutschland das Kriegsende im Mai 1945?
++ Sehr unterschiedlich: KZ-Häftlinge und Zwangsarbeiter als Befreiung, viele Deutsche als Niederlage und Zusammenbruch
+- Weitgehend einheitlich als Befreiung, weil die meisten Deutschen den Sieg der Alliierten herbeigesehnt hatten
+- Vor allem als Neuanfang, weil Städte, Versorgung und Verwaltung größtenteils intakt geblieben waren
+! Die Deutung des 8. Mai als „Tag der Befreiung“ setzte sich in der Bundesrepublik erst später durch (Rede Richard von Weizsäckers 1985). 1945 erlebten viele Deutsche vor allem Niederlage, Hunger, Bombenschäden und Ungewissheit – für Verfolgte, KZ-Häftlinge und Zwangsarbeiter war es die Befreiung.
+
+? Was bedeutete die Berliner Erklärung vom 5. Juni 1945 für die staatliche Ordnung Deutschlands?
++ Die vier Siegermächte übernahmen selbst die oberste Regierungsgewalt in Deutschland
+- Die letzte Reichsregierung unter Dönitz durfte unter alliierter Aufsicht weiter amtieren
+- Die Länder erhielten sofort ihre volle Eigenständigkeit unter einer neuen Reichsverfassung
+! Nach der bedingungslosen Kapitulation (8./9. Mai) lag die oberste Gewalt bei den Oberbefehlshabern der vier Mächte. Die Regierung Dönitz war schon am 23. Mai verhaftet worden. Zoneneinteilung und Kontrollrat waren bereits 1944/45 vereinbart (Londoner Protokoll, Jalta).
+
+? Warum lähmte das Einstimmigkeitsprinzip den Alliierten Kontrollrat zunehmend?
++ Jede der vier Mächte konnte Beschlüsse für ganz Deutschland mit ihrem Veto blockieren
+- Beschlüsse galten nur, wenn zusätzlich alle deutschen Länderregierungen zustimmten
+- Der Kontrollrat durfte nur tagen, wenn die vier Regierungschefs persönlich anwesend waren
+! Der Kontrollrat in Berlin musste einstimmig entscheiden. Zuerst blockierte vor allem Frankreich, später verhärtete sich der Ost-West-Gegensatz. Im März 1948 verließ der sowjetische Vertreter den Kontrollrat – die gemeinsame Verwaltung war am Ende.
+
+? Warum blockierte Frankreich nach 1945 im Kontrollrat gesamtdeutsche Zentralverwaltungen?
++ Aus Sicherheitsinteresse: Es wollte kein starkes, geeintes Deutschland und eigenen Zugriff auf Saar, Ruhr und Rheinland
+- Weil es eine Volksdemokratie nach sowjetischem Vorbild für ganz Deutschland anstrebte
+- Weil es die Potsdamer Beschlüsse selbst mitverhandelt hatte und auf deren schnelle Umsetzung drängte
+! Frankreich war in Potsdam nicht eingeladen und fühlte sich an die Beschlüsse nicht gebunden. Entscheidend war aber das Sicherheitsinteresse nach drei deutschen Angriffen (1870, 1914, 1940): keine deutsche Zentralgewalt, dafür eigene Ziele an Saar, Ruhr und Rhein.
+
+? Warum führte das gemeinsame Potsdamer Ziel „Demokratisierung“ bald zu Konflikten?
++ West und Ost verstanden darunter Verschiedenes: pluralistische Demokratie bzw. „Volksdemokratie“ unter kommunistischer Führung
+- Die Westmächte wollten erst nach einem Friedensvertrag demokratisieren, die UdSSR dagegen sofort
+- Die UdSSR lehnte jede Parteizulassung ab, während die Westmächte schon 1945 freie Reichstagswahlen planten
+! Gleiche Begriffe, verschiedene Inhalte: Die Potsdamer Grundsätze waren bewusst allgemein formuliert. Hinter „Demokratisierung“ standen unvereinbare Gesellschaftsmodelle – ein Kern des späteren Systemkonflikts.
+
+? Warum widersprachen sich in Potsdam die „wirtschaftliche Einheit“ Deutschlands und die Reparationsregelung?
++ Jede Macht sollte Reparationen vor allem aus der eigenen Zone entnehmen – das förderte getrennte Zonenwirtschaften
+- Reparationen durften nur aus den Gebieten östlich von Oder und Neiße entnommen werden
+- Die UdSSR verzichtete auf Reparationen und überließ sie ganz den Westmächten
+! Die Zonen-Reparationen trieben die Wirtschaftsräume auseinander. Weil die gemeinsame Wirtschaftsverwaltung nicht zustande kam, stoppte US-Militärgouverneur Clay im Mai 1946 die Reparationslieferungen aus der US-Zone an die Sowjetunion. Demontagen in den Westzonen liefen noch bis etwa 1950/51 weiter.
+
+? Wie hängen Flucht und Vertreibung der Deutschen aus dem Osten mit der Potsdamer Konferenz zusammen?
+@ sensibel
++ Die Flucht hatte schon 1944/45 begonnen; Potsdam billigte nachträglich die „Überführung“ der verbliebenen Deutschen
+- Die Flucht setzte erst nach der Konferenz ein, als Polen die Verwaltung der Ostgebiete übernahm
+- Potsdam verbot jede Ausweisung und garantierte den Deutschen ein Bleiberecht in Polen und der Tschechoslowakei
+! Vor der Roten Armee flohen Millionen schon ab Herbst 1944; „wilde Vertreibungen“ begannen vor der Konferenz. Artikel XIII sah eine „ordnungsgemäße und humane“ Überführung der Deutschen aus Polen, der Tschechoslowakei und Ungarn vor. Insgesamt verloren rund 12–14 Mio. Menschen durch Flucht und Vertreibung ihre Heimat. Die Oder-Neiße-Grenze wurde erst 1990 völkerrechtlich endgültig anerkannt.
+
+? Warum hielt der Potsdamer Konsens der Anti-Hitler-Koalition nur kurz?
++ Strittige Grundsatzfragen wurden mit dehnbaren Formeln vertagt, statt sie wirklich zu lösen
+- Die Beschlüsse waren von vornherein auf zwölf Monate befristet und liefen 1946 aus
+- Großbritannien trat nach dem Regierungswechsel 1945 offiziell von den Beschlüssen zurück
+! Begriffe wie „Demokratisierung“ oder „wirtschaftliche Einheit“ konnte jede Seite anders auslegen. Der äußere Konsens überdeckte die Gegensätze. Ein Friedensvertrag kam nie zustande – erst der Zwei-plus-Vier-Vertrag von 1990 übernahm diese Rolle.
+
+? Warum gilt die Entnazifizierung in den Westzonen als nur begrenzt erfolgreich?
++ In Massenverfahren der Spruchkammern wurden viele Belastete als „Mitläufer“ eingestuft, ab 1948 lief die Überprüfung aus
+- Die Westmächte verzichteten von Anfang an auf jede Überprüfung, um die Verwaltung nicht zu stören
+- Alle früheren NSDAP-Mitglieder blieben dauerhaft von allen öffentlichen Ämtern ausgeschlossen
+! Mit Fragebögen und Spruchkammern sollten Millionen Fälle geprüft werden. Viele legten entlastende Bescheinigungen vor („Persilscheine“). In der SBZ diente die Entnazifizierung zugleich dem gesellschaftlichen Umbau, etwa durch den Austausch vieler Lehrer und Richter.
+
+? Was war am Nürnberger Hauptkriegsverbrecherprozess (1945/46) neu?
++ Führende Vertreter eines Staates mussten sich persönlich vor einem internationalen Gericht verantworten
+- Erstmals verurteilte ein deutsches Gericht die NS-Führung nach deutschem Strafrecht
+- Der Prozess fand ohne Öffentlichkeit statt, damit keine Racheakte drohten
+! Vor dem Internationalen Militärgerichtshof der vier Mächte wurden führende Vertreter des NS-Staates angeklagt (Urteile am 1. Oktober 1946). Neu waren u. a. die Anklagepunkte „Verbrechen gegen den Frieden“ und „Verbrechen gegen die Menschlichkeit“ – Grundlagen des heutigen Völkerstrafrechts.
+
+? Was meint der Begriff „Zusammenbruchsgesellschaft“ für Deutschland 1945/46?
++ Eine Gesellschaft in Trümmern: zerstörte Städte, Hunger, Schwarzmarkt, Millionen Flüchtlinge und getrennte Familien
+- Eine Gesellschaft, in der nach Kriegsende sofort alle alten Eliten entmachtet und ersetzt wurden
+- Die Zeit nach der Währungsreform 1948, als die Preise unkontrolliert stiegen und Betriebe schlossen
+! Wohnungsnot, Lebensmittelkarten, „Zigarettenwährung“ auf dem Schwarzmarkt, Trümmerräumung, Vertriebene und heimkehrende Soldaten prägten den Alltag – besonders im Hungerwinter 1946/47.
+
+? Wofür stand die Bodenreform in der SBZ ab September 1945?
++ Enteignung von Grundbesitz über 100 Hektar und Verteilung an Neubauern – zugleich Entmachtung der alten Eliten
+- Rückgabe der im Krieg beschlagnahmten Höfe an ihre früheren Eigentümer
+- Zusammenlegung aller Bauernhöfe zu staatlichen Großbetrieben schon im Jahr 1945
+! Unter der Parole „Junkerland in Bauernhand“ wurden Gutsbesitzer und als NS-belastet geltende Eigentümer entschädigungslos enteignet. Viel Land ging an Landarbeiter, Flüchtlinge und Vertriebene. Die Kollektivierung zu LPGs folgte erst in den 1950er-Jahren.
+
+? Was verrät dieses überlieferte Zitat über die Ziele der KPD-Führung in der SBZ 1945?
+> „Es muss demokratisch aussehen, aber wir müssen alles in der Hand haben.“ – Walter Ulbricht (1945), überliefert von Wolfgang Leonhard (1955)
++ Nach außen sollten demokratische Formen gewahrt werden, die tatsächliche Macht aber bei den Kommunisten liegen
+- Die KPD wollte nach westlichem Vorbild eine Demokratie mit offenem Machtwechsel aufbauen
+- Ulbricht kritisierte damit die Besatzungsmacht, die die KPD von allen Ämtern fernhielt
+! Leonhard kam mit der „Gruppe Ulbricht“ am 30. April 1945 aus Moskau. Seinen Bericht schrieb er erst 1955, nach seinem Bruch mit der SED – eine Erinnerungsquelle, deren Perspektive du mitbedenken musst.
+
+? Urteilsfrage: War die Potsdamer Konferenz eher ein letzter Kompromiss der Alliierten oder schon der Anfang der Teilung?
+~ Eher ein Kompromiss: gemeinsame Grundsätze und eine gemeinsame Verwaltung im Kontrollrat
+~ Eher der Anfang der Teilung: Zonen-Reparationen und dehnbare Formeln trennten die Zonen von Beginn an
+~ Beides: ein echter Kompromiss, der die Teilung aber schon in sich trug
+! Hier gibt es keine einzige richtige Antwort. Für „Kompromiss“ sprechen Kontrollrat und gemeinsame Ziele, für „Anfang der Teilung“ die Zonen-Reparationen und die unterschiedliche Auslegung der Begriffe. Begründe deine Wahl mit zwei Belegen.
+
+# Stufe 2: Kalter Krieg, Blockbildung & doppelte Staatsgründung (1946–1949) | 22
+? Wie hängen die Wahlniederlagen der Kommunisten in Österreich und Ungarn (Nov. 1945) und die SED-Gründung (April 1946) zusammen?
++ Die Niederlagen waren ein Anlass: Die KPD sollte durch die Vereinigung mit der stärkeren SPD nicht ebenfalls unterliegen
+- Umgekehrt: Die SED-Gründung schreckte die Wähler in Österreich und Ungarn ab
+- Gar nicht: Die Vereinigung war schon in Potsdam von allen vier Mächten beschlossen worden
+! Nach den schwachen Ergebnissen der Kommunisten drängten KPD und Besatzungsmacht (SMAD) auf eine schnelle Vereinigung. In den Westsektoren Berlins stimmten im März 1946 rund 82 % der befragten SPD-Mitglieder gegen eine sofortige Vereinigung. Ob man von „Zwangsvereinigung“ spricht, ist deshalb auch eine Frage der Perspektive.
+
+? Was beschreibt Churchill mit diesem Bild in seiner Rede in Fulton (USA)?
+> „Von Stettin an der Ostsee bis Triest an der Adria ist ein Eiserner Vorhang über den Kontinent niedergegangen.“ – Winston Churchill, 5. März 1946 (übersetzt)
++ Die Abschottung des sowjetisch beherrschten Ostens vom Westen Europas
+- Den Bau der Berliner Mauer, mit dem die DDR ihre Grenze schloss
+- Eine Grenze, die die Westmächte zum Schutz vor Flüchtlingen errichten wollten
+! Churchill war damals nicht mehr Premierminister. Seine Rede machte den „Eisernen Vorhang“ zum Schlagwort des beginnenden Kalten Krieges. Die Berliner Mauer entstand erst 1961.
+
+? Was signalisierte US-Außenminister Byrnes mit seiner Stuttgarter Rede im September 1946?
++ Eine Wende: Die USA wollten den Wiederaufbau Deutschlands fördern und dauerhaft in Europa bleiben
+- Den vollständigen Abzug der US-Truppen aus Europa bis spätestens 1947
+- Die Anerkennung der Oder-Neiße-Linie als endgültige deutsche Ostgrenze
+! In seiner Rede (6. September 1946) kündigte Byrnes an, die US-Truppen würden bleiben, und nannte die Oder-Neiße-Grenze nur vorläufig. Kurz darauf folgte die Bizone.
+
+? Warum schlossen die USA und Großbritannien ihre Zonen zum 1. Januar 1947 zur Bizone zusammen?
++ Die gemeinsame Wirtschaftsverwaltung aller vier Zonen war gescheitert, die Versorgung wurde immer schlechter
+- Frankreich und die UdSSR hatten den Zusammenschluss im Kontrollrat ausdrücklich gefordert
+- Großbritannien wollte seine Zone an die USA abgeben und sich aus Deutschland zurückziehen
+! Hunger und hohe Besatzungskosten drängten zum Handeln. Die Bizone war ein erster Schritt zum Weststaat; 1949 kam die französische Zone hinzu (Trizone).
+
+? Welche Strategie verbanden die USA 1947 mit Truman-Doktrin und Marshallplan?
++ Eindämmung (Containment): den Kommunismus durch Unterstützung und wirtschaftlichen Wiederaufbau zurückhalten
+- Zurückdrängen (Rollback): die Sowjetunion militärisch aus Osteuropa verdrängen
+- Neutralität: Europa sollte sich selbst helfen, die USA sich aus Europa heraushalten
+! Truman sagte im März 1947 Staaten Hilfe zu, die sich gegen kommunistischen Druck wehrten – zuerst Griechenland und der Türkei. Der Marshallplan (European Recovery Program) sollte Westeuropa wirtschaftlich stabilisieren, auch im Interesse amerikanischer Absatzmärkte.
+
+? Warum lehnte die Sowjetunion den Marshallplan für sich und ihren Machtbereich ab?
++ Offenlegung der Wirtschaftsdaten und gemeinsame Planung hätten Moskaus Kontrolle über Osteuropa geschwächt
+- Die USA hatten die Sowjetunion und die osteuropäischen Staaten von vornherein ausgeschlossen
+- Die Sowjetunion hatte genug eigene Mittel und brauchte nach dem Krieg keine Aufbauhilfe
+! Aus sowjetischer Sicht war der Plan „Dollar-Imperialismus“ – Propagandasprache, aber auch Ausdruck echter Sorge um den eigenen Einfluss. Polen und die Tschechoslowakei mussten ihre Zusage auf Druck Moskaus zurückziehen. Die Antwort war die Gründung des Kominform (1947).
+
+? Was verkündete Andrei Schdanow 1947 mit der „Zwei-Lager-Theorie“?
++ Die Welt sei gespalten in ein „imperialistisches“ Lager unter den USA und ein „demokratisches“ unter der UdSSR
+- Kommunisten und Sozialdemokraten sollten in jedem Land zwei gleichberechtigte Parteien bilden
+- West und Ost sollten in Europa zwei getrennte, aber neutrale Wirtschaftszonen bilden
+! Schdanows Rede bei der Gründung des Kominform (September 1947) war die sowjetische Antwort auf Truman-Doktrin und Marshallplan. Sie steht für die Bipolarität des Kalten Krieges: zwei Blöcke, die sich als unvereinbar verstanden.
+
+? Was meint der Begriff „Systemkonflikt“ im Kalten Krieg?
++ Den Gegensatz zweier Ordnungen: liberale Demokratie mit Marktwirtschaft gegen Parteidiktatur mit Planwirtschaft
+- Einen Streit der Siegermächte über die Verwaltungssysteme der einzelnen Besatzungszonen
+- Den Streit darüber, welches Wahlsystem das Grundgesetz vorschreiben sollte
+! USA und UdSSR beanspruchten, das jeweils bessere Gesellschaftsmodell zu vertreten. Daraus folgten Blockbildung, Wettrüsten und Propaganda – in Deutschland verlief die Grenze mitten durchs Land.
+
+? Ursache und Folge: Wie hängen die Währungsreform in den Westzonen und die Berlin-Blockade (1948) zusammen?
++ Die Währungsreform war der Anlass: Die UdSSR antwortete mit eigener Währung und sperrte die Wege nach West-Berlin
+- Umgekehrt: Erst weil West-Berlin abgeschnitten war, führte der Westen die D-Mark ein
+- Gar nicht: Die Blockade richtete sich allein gegen die geplante Gründung der NATO
+! Die D-Mark kam am 20. Juni 1948, die Blockade begann am 24. Juni und dauerte bis Mai 1949. Dahinter stand der Streit um einen westdeutschen Staat.
+
+? Wie veränderte die Luftbrücke (1948/49) das Verhältnis zwischen Westdeutschen und Westalliierten?
++ Aus Besatzern wurden in den Augen vieler Schutzmächte und spätere Verbündete
+- Die Westdeutschen verlangten wegen der Engpässe den raschen Abzug der Amerikaner
+- Es blieb unverändert, weil die Versorgung vor allem deutsche Firmen übernahmen
+! Mit rund 277.000 Flügen versorgten die Westalliierten West-Berlin fast ein Jahr lang. Die „Rosinenbomber“ wurden zum Symbol der Westbindung.
+
+? Warum nannten die westdeutschen Ministerpräsidenten 1948 das neue Gesetzeswerk „Grundgesetz“ statt „Verfassung“?
++ Der Weststaat sollte als Provisorium gelten, um die Teilung nicht endgültig festzuschreiben
+- Die Westalliierten hatten den Begriff „Verfassung“ ausdrücklich verboten
+- Eine Verfassung hätte nur ein frei gewählter Reichstag beschließen dürfen
+! Auf die Frankfurter Dokumente der Westalliierten (Juli 1948) antworteten die Ministerpräsidenten mit den Koblenzer Beschlüssen. Statt einer Nationalversammlung tagte ein Parlamentarischer Rat in Bonn. Seit 1990 gilt das Grundgesetz als Verfassung des vereinten Deutschlands.
+
+? Welche Lehre aus der Weimarer Republik zog der Parlamentarische Rat beim Grundgesetz?
++ Ein starker Kanzler, ein schwächerer Präsident und ein konstruktives Misstrauensvotum
+- Ein direkt gewählter Präsident mit Notverordnungsrecht als Sicherung in Krisen
+- Volksentscheide auf Bundesebene, damit das Volk Regierungen jederzeit absetzen kann
+! Die Erfahrung von 1930–33 prägte das Grundgesetz: kein Notverordnungsrecht wie Art. 48, ein Misstrauensvotum nur mit Wahl eines Nachfolgers, unantastbare Grundrechte und eine „wehrhafte Demokratie“.
+
+? Worin unterschieden sich BRD und DDR 1949 grundlegend im Demokratieverständnis?
++ BRD: Gewaltenteilung und Parteienkonkurrenz – DDR: Führungsanspruch der SED hinter demokratischer Fassade
+- BRD: Führung durch eine Einheitspartei – DDR: freie Konkurrenz mehrerer Parteien
+- Beide waren parlamentarische Demokratien, die DDR nur mit einem stärkeren Präsidenten
+! Die DDR-Verfassung von 1949 klang demokratisch. Doch schon bei der Volkskongresswahl im Mai 1949 gab es nur eine Einheitsliste; ab 1950 sicherte die Nationale Front mit Einheitslisten den Führungsanspruch der SED.
+
+? Wie wurde in der SBZ die Gründung der DDR vorbereitet?
++ Über die Volkskongressbewegung, deren Delegierte im Mai 1949 über eine Einheitsliste gewählt wurden
+- Durch eine freie Wahl zu einer Nationalversammlung mit konkurrierenden Parteien
+- Durch einen Beschluss des Alliierten Kontrollrats nach einer Volksabstimmung
+! Der 3. Volkskongress bestätigte im Mai 1949 einen Verfassungsentwurf. Am 7. Oktober 1949 erklärte sich der Volksrat zur Provisorischen Volkskammer und setzte die DDR-Verfassung in Kraft.
+
+? Was ist vom Grundgesetz von 1949 bis heute geblieben?
++ Die unantastbare Menschenwürde (Art. 1) und die Grundrechte als Kern der Verfassung
+- Die drei westlichen Besatzungszonen als Grundlage der heutigen Bundesländer
+- Bonn als im Grundgesetz festgeschriebene Hauptstadt
+! Das Grundgesetz gilt seit 1990 für ganz Deutschland. Art. 1 und die Grundsätze in Art. 20 sind durch die „Ewigkeitsklausel“ (Art. 79 Abs. 3) vor Änderungen geschützt. Hauptstadt ist seit der Einheit Berlin.
+
+? Urteilsfrage: Ab wann war die deutsche Teilung kaum noch umkehrbar?
+~ 1946/47: mit SED-Gründung, Bizone und Marshallplan
+~ 1948: mit Währungsreform und Berlin-Blockade
+~ 1949: erst mit der Gründung von zwei Staaten
+! Hier gibt es keine einzige richtige Antwort. Begründe deine Wahl mit zwei Ereignissen aus dem Spiel und nenne ein Gegenargument.`;
+
+    /* ============================================================================
+       2. 8-BIT SPRITE-DATEN
+       ============================================================================ */
+    // Spiegelt linke Pixel-Hälften zu symmetrischen Voll-Sprites
+    function mirrorRows(halfRows) {
+      return halfRows.map(r => r + r.split('').reverse().join(''));
+    }
+
+    // Eigenes Flugzeug-Design „KS1-Nova“ (40x35 Pixel): Nadelnase, Cockpit, gerade Flügel im Heck,
+    // an jedem Flügelende eine Triebwerksgondel mit eigenem Düsenstrahl, dazu das Mittel-Triebwerk;
+    // weiß mit türkisen Rennstreifen und gelbem Flügelstreifen.
+    const SPRITE_KS1_NOVA = mirrorRows([
+      "...................W",
+      "..................OW",
+      "..................OW",
+      "..................OT",
+      ".................OTW",
+      ".................OTW",
+      ".................OTT",
+      "................OTWW",
+      "................OTWW",
+      "................OTBB",
+      "................OBHB",
+      "................OBBH",
+      "................OBBB",
+      "................OTBB",
+      "...............OTTWW",
+      "...............OYTWW",
+      "...............OTTWW",
+      "...............OTTWW",
+      "...............OTTWW",
+      "..OO...........OTTWW",
+      ".OYYO..........OTTWW",
+      ".OTTO.........OOTTWW",
+      ".OTTOOOOOOOOOOOWTTWW",
+      ".OTTOWWWWWWWWWWWTTWW",
+      ".OWWOYYYYYYYYWWWTTWW",
+      ".OWWOWWWWWWWWWWWTTWW",
+      ".OTTOWWWWWWWWWWWTTWW",
+      ".OTTOOOOOOOOOOOMTTWW",
+      ".OMMO.........OMTTWW",
+      ".OyyO..........OMMMM",
+      ".FyyF..........OMyyM",
+      ".fFFf...........FyyF",
+      "..ff............fFFf",
+      ".................fFf",
+      "..................ff"
+    ]);
+
+    // Wächter Modell 1 von hinten (32x36 Pixel, geteilter Oberkörper + 2 Lauf-Frames)
+    const GUARDIAN_TOP = [
+      "............OOOOOO..............",
+      ".........OOODCCCCDOO....LLLLL...",
+      ".......OODDDCCCCCCCDDO.LLGGGLL..",
+      "......OODDCCCCCCCCCCCDOLG...GLL.",
+      ".......OODDDDCCCCCCCDDOLL....GLL",
+      "........OOODDDDDCCCCDDO.LL...GLL",
+      ".........OODCCCCCCCCDDO..LL.GLL.",
+      "........OODDDDDDDDDDDDO....GLL..",
+      ".......OODCCCCCCCCCCCDDO..GLL...",
+      "......OOSSSSSSSSSSSSSSSOO.LL....",
+      ".....OOSRRRRRRRRRRRRRrrSOLG.....",
+      ".....OOSRRRRRRRRRRRRrOrSOLL.....",
+      ".....OOSrrrrrrrrrrrrrrSSOLL.....",
+      "....OODCOOOOOOOOOOOOOOOCDOLL....",
+      "...OODCCOPPPPPPPPPPPPPOCDOLL....",
+      "...OODCCOPpBBBBBBBBBpPOCDOLL....",
+      "..OODCCCOPpBBBBBBBBBpPOCCDOLL...",
+      "..OODCCCOPppBBBYYBBBppOCCDOLL...",
+      "..OODCCCOPPPPPBYYBPPPPOCCDOLL...",
+      "..OODCCCOPBPBBBBBBBBPBOCDDAAHO..",
+      ".OODCCCCOPBPBBBBBBBBPBOCDAAHKKO.",
+      ".OODCCCCCOOOOOOOOOOOOOCCCCO.KK..",
+      ".OODCCCCCCCCDCCCCDCCCCCCCCDOKK..",
+      ".OODCCCCCCCDOCCCCODCCCCCCCDOKK..",
+      ".OODCCCCCCDOCCCCCCODCCCCCCDOLL..",
+      "OODCCCCCCDOCCCCCCCCODCCCCCCDOLL.",
+      "OODCCCCCDOCCCCCCCCCCODCCCCCDOLL.",
+      "OODCCCCDOCCCDOOOODCCCODCCCCDOLL.",
+      "OODCCCDOCCDOO....OODCCODCCCDOLL.",
+      "OODCCDOCDOO..TTTT..OODCODCCDOLL.",
+      "OODCDODOO...TTTTTT...OODODCDOLL."
+    ];
+    const SPRITE_GUARDIAN_A = GUARDIAN_TOP.concat([
+      "OOD.OO......TT..TT......OO.DOLL.",
+      ".O.........fff..FFF........O.LL.",
+      "...........fff..FFFF.........LL.",
+      "...........OOO..OOOO.........LL.",
+      "................................"
+    ]);
+    const SPRITE_GUARDIAN_B = GUARDIAN_TOP.concat([
+      ".OO.DO......TT..TT......OD.OOLL.",
+      "..O........FFFF..fff.......O.LL.",
+      "...........FFFF..fff.........LL.",
+      "...........OOOO..OOO.........LL.",
+      "................................"
+    ]);
+
+    const SPRITE_BOOK_OBSTACLE = mirrorRows([
+      "..OOOOOO",
+      ".OBBBBBB",
+      "OBBYYYYB",
+      "OBBBBBBB",
+      "OSSSSSSS",
+      "OPPPPPPP",
+      "OPPPPPPP",
+      ".OOOOOOO",
+      "..OCCCCC",
+      ".OCCCCCC",
+      ".OSSSSSS",
+      ".OPPPPPP",
+      "..OOOOOO"
+    ]);
+
+    const SPRITE_ASTEROID_16 = [
+      ".....OOOOOO.....",
+      "...OOHHHHHHOO...",
+      "..OOHHLLLLLLOO..",
+      ".OOHLLLLCCCLLOO.",
+      ".OHLLLCCDDDCLLOO",
+      "OOHLLCCDDDDCCLOO",
+      "OHLLLCCDDDCCLLMO",
+      "OHLLLLCCCCLLLLMO",
+      "OLLLLLLLLLMMCCMO",
+      "OLLMCCLLMMMMCCMO",
+      "OLMCCCDMMMMMMCMO",
+      ".OMCCDDMMMMMMMOO",
+      ".OOMMMMMMMMMMOO.",
+      "..OOMMMMMMMMOO..",
+      "...OOOMMMMOOO...",
+      ".....OOOOOO....."
+    ];
+
+    const SPRITE_ENEMY_FIGHTER = mirrorRows([
+      "......FF.",
+      "......TT.",
+      ".....WWWW",
+      "..K..WRRR",
+      "..K.WWRRR",
+      "..KWWWRWW",
+      ".WWWWWRWC",
+      "WWWWWWWRC",
+      "RRRR..WWC",
+      ".K....WWW",
+      ".......WW",
+      ".......WW",
+      "........W",
+      "........W"
+    ]);
+
+    // Zentraler 8-Bit Pixel-Renderer für alle Matrizen (keine Code-Wiederholung!)
+    function drawPixelMatrix(ctx, rows, palette, startX, startY, pSize) {
+      for (let r = 0; r < rows.length; r++) {
+        const row = rows[r];
+        for (let c = 0; c < row.length; c++) {
+          const ch = row[c];
+          if (ch === '.' || !palette[ch]) continue;
+          ctx.fillStyle = palette[ch];
+          ctx.fillRect(startX + c * pSize, startY + r * pSize, pSize, pSize);
+        }
+      }
+    }
+
+
+    /* ============================================================================
+       3. SPEICHER, HILFSFUNKTIONEN & 8-BIT SOUND
+       ============================================================================ */
+    const STORAGE_KEY_CUSTOM_DSL = 'ks1_chronik_custom_dsl_v7';
+    const STORAGE_KEY_BEST = 'ks1_chronik_best_score_v7';
+    const STORAGE_KEY_SOUND = 'ks1_chronik_sound_v7';
+    const STORAGE_KEY_PIN = 'ks1_chronik_teacher_pin_v7';
+    const STORAGE_KEY_BADGES = 'ks1_chronik_badges_v7';
+
+    // localStorage kann blockiert sein (private Fenster, gesperrte Websitedaten) – nie ungeschützt zugreifen
+    const store = {
+      get(key, fallback = null) {
+        try { const v = window.localStorage.getItem(key); return v === null ? fallback : v; } catch (e) { return fallback; }
+      },
+      set(key, value) {
+        try { window.localStorage.setItem(key, value); return true; } catch (e) { return false; }
+      },
+      remove(key) {
+        try { window.localStorage.removeItem(key); } catch (e) {}
+      }
+    };
+
+    function escapeHtml(s) {
+      return String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+    }
+
+    const IS_TOUCH = !!(window.matchMedia && window.matchMedia('(hover: none) and (pointer: coarse)').matches);
+
+    const sound = {
+      enabled: store.get(STORAGE_KEY_SOUND, '1') !== '0',
+      ctx: null,
+      // Nur nach einer Nutzergeste aufrufen (Spielstart)
+      init() {
+        if (!this.ctx) {
+          const AudioCtx = window.AudioContext || window.webkitAudioContext;
+          if (AudioCtx) { try { this.ctx = new AudioCtx(); } catch (e) { this.ctx = null; } }
+          // iOS 17+: Web Audio auch bei aktivem Stummschalter hörbar machen
+          try { if (navigator.audioSession) navigator.audioSession.type = 'playback'; } catch (e) {}
+        }
+        if (this.ctx && this.ctx.state !== 'running') { try { this.ctx.resume(); } catch (e) {} }
+      },
+      suspend() {
+        if (this.ctx && this.ctx.state === 'running') { try { this.ctx.suspend(); } catch (e) {} }
+      },
+      updateButton() {
+        const btn = document.getElementById('soundToggleBtn');
+        if (!btn) return;
+        btn.textContent = this.enabled ? '🔊 Ton' : '🔇 Aus';
+        btn.setAttribute('aria-pressed', String(this.enabled));
+      },
+      toggle() {
+        this.enabled = !this.enabled;
+        store.set(STORAGE_KEY_SOUND, this.enabled ? '1' : '0');
+        this.updateButton();
+        if (this.enabled) this.init();
+      },
+      tone(freq, duration = 0.08, type = 'square', vol = 0.06) {
+        if (!this.enabled || !this.ctx) return;
+        try {
+          if (this.ctx.state !== 'running') this.ctx.resume();
+          const osc = this.ctx.createOscillator();
+          const gain = this.ctx.createGain();
+          osc.type = type;
+          osc.frequency.setValueAtTime(freq, this.ctx.currentTime);
+          gain.gain.setValueAtTime(vol, this.ctx.currentTime);
+          gain.gain.exponentialRampToValueAtTime(0.001, this.ctx.currentTime + duration);
+          osc.connect(gain);
+          gain.connect(this.ctx.destination);
+          osc.start();
+          osc.stop(this.ctx.currentTime + duration);
+        } catch (e) {}
+      },
+      jump() { this.tone(320, 0.06, 'square', 0.05); setTimeout(() => this.tone(540, 0.09, 'square', 0.05), 45); },
+      coin() { this.tone(880, 0.05, 'square', 0.04); setTimeout(() => this.tone(1320, 0.08, 'square', 0.04), 45); },
+      kersBoost() { [440, 660, 880, 1320].forEach((f, i) => setTimeout(() => this.tone(f, 0.07, 'sawtooth', 0.06), i * 35)); },
+      correct() { [523, 659, 784, 1046].forEach((f, i) => setTimeout(() => this.tone(f, 0.09, 'square', 0.06), i * 55)); },
+      soft() { this.tone(523, 0.14, 'triangle', 0.05); },
+      neutral() { [392, 523].forEach((f, i) => setTimeout(() => this.tone(f, 0.12, 'triangle', 0.05), i * 90)); },
+      wrong() { this.tone(190, 0.15, 'sawtooth', 0.07); setTimeout(() => this.tone(135, 0.22, 'sawtooth', 0.07), 120); }
+    };
+
+    /* ============================================================================
+       4. FRAGEN-PARSER MIT PRÜFUNG
+       ============================================================================ */
+    function parseQuestionsDsl(dslText) {
+      const levels = [], errors = [];
+      let currentLevel = null, currentQ = null;
+
+      const pushQ = () => {
+        if (!currentQ) return;
+        const q = currentQ;
+        currentQ = null;
+        const short = q.question.length > 50 ? q.question.slice(0, 50) + '…' : q.question;
+        const nCorrect = q.answers.filter(a => a.correct).length;
+        const nOpinion = q.answers.filter(a => a.opinion).length;
+        if (nOpinion > 0) {
+          if (nCorrect > 0 || nOpinion !== q.answers.length) { errors.push(`Zeile ${q.line}: Urteilsfrage darf nur „~“-Antworten haben („${short}“).`); return; }
+          if (q.answers.length < 2 || q.answers.length > 4) { errors.push(`Zeile ${q.line}: Urteilsfrage braucht 2–4 Positionen („${short}“).`); return; }
+          q.type = 'urteil';
+        } else {
+          if (nCorrect !== 1) { errors.push(`Zeile ${q.line}: genau eine „+“-Antwort nötig, gefunden: ${nCorrect} („${short}“).`); return; }
+          if (q.answers.length < 3 || q.answers.length > 4) { errors.push(`Zeile ${q.line}: 3 oder 4 Antworten nötig, gefunden: ${q.answers.length} („${short}“).`); return; }
+          q.type = q.quote ? 'quelle' : 'wissen';
+        }
+        if (!currentLevel) { currentLevel = { title: 'Level 1', baseTime: 22, questions: [] }; levels.push(currentLevel); }
+        currentLevel.questions.push(q);
+      };
+
+      dslText.split(/\r?\n/).forEach((raw, i) => {
+        const line = raw.trim();
+        if (!line) return;
+        const prefix = line[0], content = line.slice(1).trim();
+        if (prefix === '#') {
+          pushQ();
+          const parts = content.split('|').map(s => s.trim());
+          const t = parseFloat(parts[1]);
+          currentLevel = { title: parts[0] || `Level ${levels.length + 1}`, baseTime: (t >= 8 && t <= 90) ? t : 22, questions: [] };
+          levels.push(currentLevel);
+        } else if (prefix === '?') {
+          pushQ();
+          let h = 0;
+          for (let k = 0; k < content.length; k++) h = (Math.imul(31, h) + content.charCodeAt(k)) | 0;
+          currentQ = { id: 'q_' + Math.abs(h), question: content, answers: [], explanation: '', quote: '', sensitive: false, line: i + 1 };
+        } else if (!currentQ) {
+          errors.push(`Zeile ${i + 1}: steht vor der ersten Frage („?“).`);
+        } else if (prefix === '+' || prefix === '-') {
+          currentQ.answers.push({ text: content, correct: prefix === '+', opinion: false });
+        } else if (prefix === '~') {
+          currentQ.answers.push({ text: content, correct: false, opinion: true });
+        } else if (prefix === '!') {
+          currentQ.explanation = content;
+        } else if (prefix === '>') {
+          currentQ.quote = content;
+        } else if (prefix === '@') {
+          if (/sensibel/i.test(content)) currentQ.sensitive = true;
+        } else {
+          errors.push(`Zeile ${i + 1}: unbekanntes Zeichen „${prefix}“ am Zeilenanfang.`);
+        }
+      });
+      pushQ();
+      return { levels: levels.filter(l => l.questions.length > 0), errors };
+    }
+
+    /* ============================================================================
+       5. APP-VERWALTUNG (LEHRER-ZUGANG MIT PIN, REKORD, PWA)
+       ============================================================================ */
+    const app = {
+      teacherUnlocked: false,
+      lastFocus: null,
+
+      init() {
+        sound.updateButton();
+        document.getElementById('questionDslInput').value = store.get(STORAGE_KEY_CUSTOM_DSL, DEFAULT_QUESTIONS_DSL);
+
+        const params = new URLSearchParams(window.location.search);
+        if (params.has('lehrer') || params.has('admin')) this.requestTeacher();
+
+        window.addEventListener('keydown', (e) => {
+          if (e.key !== 'Escape') return;
+          ['editorModal', 'pinModal'].forEach(id => {
+            if (!document.getElementById(id).classList.contains('hidden')) { e.preventDefault(); this.closeModal(id); }
+          });
+        });
+        document.getElementById('pinInput').addEventListener('keydown', (e) => {
+          if (e.key === 'Enter') { e.preventDefault(); this.submitPin(); }
+        });
+
+        this.updateBestBadge();
+
+        const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+        if (isIOS) document.getElementById('iosMuteHint').classList.remove('hidden');
+
+        const fsBtn = document.getElementById('fullscreenBtn');
+        if (IS_TOUCH && document.fullscreenEnabled) {
+          fsBtn.classList.remove('hidden');
+          fsBtn.addEventListener('click', () => this.toggleFullscreen());
+        }
+
+        if ('serviceWorker' in navigator && /^https?:$/.test(window.location.protocol)) {
+          navigator.serviceWorker.register('sw.js').catch(() => {});
+        }
+      },
+
+      toggleFullscreen() {
+        if (document.fullscreenElement) { document.exitFullscreen().catch(() => {}); return; }
+        document.documentElement.requestFullscreen().then(() => {
+          try { if (screen.orientation && screen.orientation.lock) screen.orientation.lock('portrait').catch(() => {}); } catch (e) {}
+        }).catch(() => {});
+      },
+
+      getBest() { return parseInt(store.get(STORAGE_KEY_BEST, '0'), 10) || 0; },
+
+      updateBestBadge() {
+        const el = document.getElementById('startBestTimeBadge');
+        if (el) el.textContent = `🏆 Rekord: ${this.getBest()} P`;
+      },
+
+      async hashPin(pin) {
+        const salted = 'geschichtswaechter-pin:' + pin;
+        try {
+          if (window.crypto && crypto.subtle && window.TextEncoder) {
+            const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(salted));
+            return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2, '0')).join('');
+          }
+        } catch (e) {}
+        let h = 2166136261;
+        for (let i = 0; i < salted.length; i++) { h ^= salted.charCodeAt(i); h = Math.imul(h, 16777619); }
+        return 'fnv' + (h >>> 0).toString(16);
+      },
+
+      requestTeacher() {
+        if (game.state === 'running' || game.state === 'gate') game.togglePause();
+        const hasPin = !!store.get(STORAGE_KEY_PIN);
+        document.getElementById('pinDesc').textContent = hasPin
+          ? 'Bitte Lehrer-PIN eingeben.'
+          : 'Erster Aufruf auf diesem Gerät: Lege eine PIN fest (mindestens 4 Zeichen). Sie wird nur in diesem Browser gespeichert.';
+        document.getElementById('pinInput').value = '';
+        document.getElementById('pinMsg').textContent = '';
+        this.openModal('pinModal');
+      },
+
+      async submitPin() {
+        const input = document.getElementById('pinInput');
+        const msg = document.getElementById('pinMsg');
+        const pin = input.value.trim();
+        if (pin.length < 4) { msg.textContent = 'Mindestens 4 Zeichen.'; return; }
+        const h = await this.hashPin(pin);
+        const stored = store.get(STORAGE_KEY_PIN);
+        if (!stored) {
+          if (!store.set(STORAGE_KEY_PIN, h)) { msg.textContent = 'PIN kann nicht gespeichert werden (Websitedaten blockiert).'; return; }
+        } else if (stored !== h) {
+          msg.textContent = '❌ Falsche PIN.';
+          input.value = '';
+          return;
+        }
+        this.closeModal('pinModal');
+        this.unlockTeacherMode();
+      },
+
+      unlockTeacherMode() {
+        const bar = document.getElementById('teacherBar');
+        bar.classList.remove('hidden');
+        bar.classList.add('flex');
+        this.teacherUnlocked = true;
+      },
+
+      lockTeacherMode() {
+        const bar = document.getElementById('teacherBar');
+        bar.classList.add('hidden');
+        bar.classList.remove('flex');
+        this.teacherUnlocked = false;
+        this.closeModal('editorModal');
+      },
+
+      openEditor() {
+        if (!this.teacherUnlocked) { this.requestTeacher(); return; }
+        if (game.state === 'running' || game.state === 'gate') game.togglePause();
+        document.getElementById('editorStatusMsg').textContent = '';
+        this.openModal('editorModal');
+      },
+
+      openModal(id) {
+        const el = document.getElementById(id);
+        if (!el) return;
+        this.lastFocus = document.activeElement;
+        el.classList.remove('hidden');
+        const first = el.querySelector('input, textarea, button');
+        if (first) first.focus();
+      },
+
+      closeModal(id) {
+        const el = document.getElementById(id);
+        if (!el || el.classList.contains('hidden')) return;
+        el.classList.add('hidden');
+        if (this.lastFocus && this.lastFocus.focus) this.lastFocus.focus();
+      },
+
+      saveCustomQuestions() {
+        const area = document.getElementById('questionDslInput');
+        const msg = document.getElementById('editorStatusMsg');
+        const { levels, errors } = parseQuestionsDsl(area.value);
+        if (errors.length) {
+          msg.style.color = '#f87171';
+          msg.textContent = '⚠️ Bitte korrigieren:\n' + errors.slice(0, 6).join('\n') + (errors.length > 6 ? `\n… und ${errors.length - 6} weitere` : '');
+          return;
+        }
+        if (!levels.length) {
+          msg.style.color = '#f87171';
+          msg.textContent = '⚠️ Bitte mindestens ein Level (#) und eine Frage (?) mit Antworten anlegen.';
+          return;
+        }
+        if (!store.set(STORAGE_KEY_CUSTOM_DSL, area.value)) {
+          msg.style.color = '#f87171';
+          msg.textContent = '⚠️ Speichern nicht möglich (Websitedaten im Browser blockiert).';
+          return;
+        }
+        const total = levels.reduce((n, l) => n + l.questions.length, 0);
+        msg.style.color = '#6ee7b7';
+        msg.textContent = `✓ ${levels.length} Level mit ${total} Fragen gespeichert. Gilt ab dem nächsten Spielstart.`;
+      },
+
+      restoreDefaultQuestions() {
+        document.getElementById('questionDslInput').value = DEFAULT_QUESTIONS_DSL;
+        store.remove(STORAGE_KEY_CUSTOM_DSL);
+        const msg = document.getElementById('editorStatusMsg');
+        msg.style.color = '#6ee7b7';
+        msg.textContent = '✓ Standard-Fragenkatalog (12.1: 1945–1949) wiederhergestellt.';
+      }
+    };
+
+    /* ============================================================================
+       6. HIGH-DPI JUMP-&-RUN ENGINE
+       ============================================================================ */
+    const OBSTACLE_TYPES = new Set(['asteroid', 'book_obstacle', 'enemy_fighter']);
+    const HITTABLE_TYPES = new Set(['asteroid', 'book_obstacle', 'enemy_fighter', 'jump_barrier']);
+    const BOOK_COLORS = [
+      { cover: '#e11d48', spine: '#881337' },
+      { cover: '#2563eb', spine: '#1e3a8a' },
+      { cover: '#0d9488', spine: '#134e4a' },
+      { cover: '#d97706', spine: '#78350f' },
+      { cover: '#7c3aed', spine: '#4c1d95' }
+    ];
+    const POINTS = { correct: 150, judgment: 60, victory: 600, cleanLock: 100 };
+    const BADGE_DEFS = {
+      noJoker: '🎯 Ohne Joker gewonnen',
+      perfect: '🧠 Alle Wissensfragen richtig',
+      cleanLocks: '🔓 Schlösser ohne Fehlversuch',
+      noCrash: '🛡️ Schulgang ohne Crash'
+    };
+    const GUARDIAN_PALETTE = {
+      O: '#1a0f0a', D: '#783c16', C: '#b4622a', S: '#3b1d0e', R: '#d8ae7e', r: '#b08254',
+      P: '#633215', p: '#43200c', B: '#854621', Y: '#fbbf24', A: '#6b5344', H: '#d6a17c',
+      K: '#1e293b', L: '#39ff14', G: '#dcfce7', T: '#27272a', F: '#5c2d16', f: '#3f1d0d'
+    };
+
+    const game = {
+      canvas: null,
+      ctx: null,
+      state: 'menu',
+      prevState: null,
+      stage: 1,
+      gatesPerStage: 4,
+      stageGatesCleared: 0,
+      stageMeters: 0,
+      crashStormActive: false,
+      crashStormTimer: 0,
+      cutsceneStartTime: 0,
+      victoryAchieved: false,
+      stagePools: { 1: [], 2: [] },
+      stageCursors: { 1: 0, 2: 0 },
+      levelTimes: { 1: 22, 2: 22 },
+      lanes: 3,
+      playerLane: 1,
+      visualLane: 1,
+      jumpTime: 0,
+      jumpDuration: 0.66,
+      jumpsUsed: 0,
+      maxJumps: 2,
+      jumpPeakHeight: 68,
+      coinsCollected: 0,
+      distanceMeters: 0,
+      knowledgePoints: 0,
+      questionsSolved: 0,
+      questionsAsked: 0,
+      shields: 3,
+      maxShields: 4,
+      hitCounter: 0,
+      stage2Crashes: 0,
+      gateReason: 'regular',
+      rescueUsed: { 1: false, 2: false },
+      rescueAfterRegular: false,
+      currentQuestion: null,
+      kersCharges: 3,
+      kersBoostTimer: 0,
+      slowdownTimer: 0,
+      hints: 3,
+      hintsUsed: 0,
+      hintUsedThisGate: false,
+      reviewLog: [],
+      judgmentLog: [],
+      lockMistakes: 0,
+      currentLockMistakes: 0,
+      scrollPos: 0,
+      baseSpeed: 175,
+      currentSpeed: 175,
+      nextGateDist: 2100,
+      gateTimer: 22,
+      gateMaxTime: 22,
+      gateInputReadyAt: 0,
+      activeGateChoices: [],
+      pendingAdvance: null,
+      feedbackReadyAt: 0,
+      entities: [],
+      projectiles: [],
+      particles: [],
+      combo: 1,
+      floatingTexts: [],
+      stars: [],
+      nebulae: [],
+      lastTime: 0,
+      frameCount: 0,
+      width: 800,
+      height: 500,
+      shipSpriteA: null,
+      shipSpriteB: null,
+      shipSpriteBoost: null,
+      spriteCache: {},
+      gradCache: new Map(),
+      domCache: {},
+      activeBoardLockId: 1,
+      boardLockSolvedSlots: {},
+      selectedDndCardId: null,
+      dragInfo: null,
+      suppressCardClickUntil: 0,
+      _shuffledTrayOrder: null,
+      _shuffledTrayLockId: null,
+      boardLockDefs: {
+        1: {
+          badge: '🔒 ZWISCHENSCHRITT 1/2 • TAFELBILD-SCHLOSS AN DER KS1-EINGANGSTÜR',
+          title: 'STRUKTURBILD: DIE POTSDAMER KONFERENZ (17.7.–2.8.1945)',
+          continueLabel: '🔓 EINGANGSTÜR OFFEN! REIN IN DIE SCHULE ▶',
+          slots: [
+            { id: 'p1_teilnehmer', label: 'TEILNEHMER („Die Großen Drei“)', text: 'Truman (USA), Stalin (UdSSR), Churchill bzw. ab 28.7. Attlee (GB)', hint: 'In Potsdam verhandelten nur die drei Hauptsiegermächte – Frankreich war nicht eingeladen.' },
+            { id: 'p1_besatzung', label: 'BESATZUNGSSTRUKTUR', text: '4 Besatzungszonen, 4 Sektoren Berlins & Alliierter Kontrollrat', hint: 'Zonen und Kontrollrat waren schon 1944/45 vereinbart (Londoner Protokoll, Jalta, Berliner Erklärung) – Potsdam bestätigte sie.' },
+            { id: 'p1_5ds', label: 'LINKS: DIE „D“-ZIELE', text: 'Demilitarisierung, Denazifizierung, Demokratisierung, Dezentralisierung, Demontage', hint: 'Die „D“-Ziele werden in Schulbüchern unterschiedlich gezählt – im Protokoll steht z. B. auch die Dekartellisierung der Wirtschaft.' },
+            { id: 'p1_gebiete', label: 'RECHTS: OSTGEBIETE', text: 'Gebiete östlich von Oder und Neiße unter poln./sowj. Verwaltung; „Überführung“ der Deutschen', hint: 'Die Ostgebiete kamen „bis zu einem Friedensvertrag“ unter polnische bzw. sowjetische Verwaltung; Artikel XIII billigte die Ausweisung der Deutschen.' },
+            { id: 'p1_wirtschaft', label: 'UNTEN: WIRTSCHAFT', text: 'Deutschland als wirtschaftliche Einheit – aber Reparationen aus der eigenen Zone', hint: 'Gemeinsame Wirtschaft und Zonen-Reparationen widersprachen sich – ein Grund für das spätere Auseinanderdriften.' }
+          ]
+        },
+        2: {
+          badge: '🔒 ZWISCHENSCHRITT 2/2 • ARCHIV-SCHLOSS VOR DER QUELLEN-CHRONIK',
+          title: 'STRUKTURBILD: ZWEI WEGE ZUR DOPPELTEN STAATSGRÜNDUNG (1945–1949)',
+          continueLabel: '🔓 ARCHIVTÜR OFFEN! QUELLEN-CHRONIK BERGEN ▶',
+          rows: [
+            {
+              west: { id: 'w2_45', text: 'Lizenzparteien & erste Wahlen in Gemeinden und Ländern', hint: 'Die Westmächte ließen Parteien schrittweise zu („Lizenzparteien“); 1946/47 folgten Gemeinde- und Landtagswahlen.' },
+              year: { id: 'y2_45', text: '1945 / 1946', hint: 'Direkt nach Kriegsende fielen die ersten politischen und wirtschaftlichen Weichenstellungen.' },
+              east: { id: 'e2_45', text: 'Bodenreform & Enteignung der Großindustrie', hint: 'In der SBZ ließ die SMAD schon im Juni 1945 Parteien zu, steuerte sie aber über den „Block“. Ab Herbst 1945 wurden Großgrundbesitz und Großbetriebe enteignet.' }
+            },
+            {
+              west: { id: 'w2_47', text: 'Bizone, Truman-Doktrin & Marshallplan', hint: '1947: Bizone ab 1. Januar, Truman-Doktrin im März, Ankündigung des Marshallplans im Juni.' },
+              year: { id: 'y2_47', text: '1946 / 1947', hint: 'Zwischen Frühjahr 1946 (SED) und 1947 (Bizone, Marshallplan) verfestigten sich die Blöcke.' },
+              east: { id: 'e2_47', text: 'Vereinigung von KPD und SPD zur SED (unter sowjetischem Druck)', hint: 'Im April 1946 entstand in der SBZ die SED – viele Sozialdemokraten wurden gedrängt, Gegner verfolgt.' }
+            },
+            {
+              west: { id: 'w2_48', text: 'Währungsreform (D-Mark) & Berliner Luftbrücke', hint: 'Im Juni 1948 führten die Westzonen die D-Mark ein und versorgten West-Berlin bald aus der Luft.' },
+              year: { id: 'y2_48', text: 'Juni 1948', hint: 'Im Juni 1948 teilten zwei getrennte Währungsreformen Deutschland wirtschaftlich.' },
+              east: { id: 'e2_48', text: 'Eigene Währungsreform (Ost-Mark) & Berlin-Blockade', hint: 'Als Reaktion auf die D-Mark führte die SBZ eine eigene Währung ein und blockierte West-Berlin.' }
+            },
+            {
+              west: { id: 'w2_49', text: 'Grundgesetz verkündet (23.5.) → Gründung der BRD', hint: 'Das Grundgesetz wurde am 23. Mai 1949 verkündet und trat mit Ablauf des Tages in Kraft.' },
+              year: { id: 'y2_49', text: 'Mai / Okt. 1949', hint: 'Im Mai 1949 entstand die Bundesrepublik Deutschland, im Oktober 1949 die DDR.' },
+              east: { id: 'e2_49', text: 'DDR-Verfassung in Kraft (7.10.) → Gründung der DDR', hint: 'Am 7. Oktober 1949 erklärte sich der Volksrat zur Provisorischen Volkskammer und setzte die DDR-Verfassung in Kraft.' }
+            }
+          ],
+          links: [
+            { id: 'k2_1', text: 'Kontrollrat blockiert → beide Seiten bauen ihre Zonen nach eigenem Modell um', hint: 'Weil die gemeinsame Verwaltung stockte, gingen West und Ost ab 1946/47 getrennte Wege – Bizone hier, SED-Herrschaft dort.' },
+            { id: 'k2_2', text: 'Marshallplan braucht stabiles Geld → der Westen reformiert die Währung', hint: 'Ohne neue Währung konnte die Marshallplan-Hilfe kaum wirken – die Währungsreform folgte 1948.' },
+            { id: 'k2_3', text: 'Blockade schweißt den Westen zusammen → Weststaat entsteht, der Osten zieht nach', hint: 'Die Blockade beschleunigte die Arbeit am Grundgesetz; die DDR wurde im Oktober 1949 als Antwort gegründet.' }
+          ]
+        }
+      },
+
+      init() {
+        this.canvas = document.getElementById('gameCanvas');
+        this.ctx = this.canvas.getContext('2d');
+        this.buildCrispShipSprites();
+        this.buildSpriteCache();
+        this.resize();
+        window.addEventListener('resize', () => this.resize());
+        if (window.ResizeObserver) new ResizeObserver(() => this.resize()).observe(document.getElementById('gameFrame'));
+
+        this.nebulae = [
+          { x: 0.22, y: 0.25, rx: 160, color: 'rgba(56, 189, 248, 0.06)', speed: 0.04 },
+          { x: 0.76, y: 0.42, rx: 190, color: 'rgba(139, 92, 246, 0.07)', speed: 0.06 },
+          { x: 0.45, y: 0.68, rx: 210, color: 'rgba(16, 185, 129, 0.045)', speed: 0.03 }
+        ];
+
+        const starColors = ['#ffffff', '#f8fafc', '#e0f2fe', '#fef9c3', '#ede9fe'];
+        for (let i = 0; i < 180; i++) {
+          const layer = i < 110 ? 0 : (i < 160 ? 1 : 2);
+          this.stars.push({
+            x: Math.random(),
+            y: Math.random(),
+            size: layer === 0 ? 1 : (layer === 1 ? 1.5 : 2),
+            speed: layer === 0 ? 0.08 : (layer === 1 ? 0.18 : 0.32),
+            color: starColors[i % starColors.length],
+            twinkleSpeed: 0.002 + Math.random() * 0.005,
+            twinklePhase: Math.random() * Math.PI * 2,
+            bright: layer === 2
+          });
+        }
+
+        window.addEventListener('keydown', (e) => this.handleKey(e));
+
+        this.canvas.addEventListener('pointerdown', (e) => {
+          if (this.state === 'feedback') { this.continueAfterFeedback(); return; }
+          if (this.state !== 'running' && this.state !== 'gate') return;
+          const rect = this.canvas.getBoundingClientRect();
+          const relX = (e.clientX - rect.left) / rect.width;
+          if (relX < 0.32) this.moveLane(-1);
+          else if (relX > 0.68) this.moveLane(1);
+          else if (this.state === 'running') this.handlePrimaryAction();
+        });
+
+        document.addEventListener('visibilitychange', () => {
+          if (document.hidden) {
+            if (this.state === 'running' || this.state === 'gate') this.togglePause();
+            sound.suspend();
+          }
+        });
+        window.addEventListener('blur', () => {
+          if (this.state === 'running' || this.state === 'gate') this.togglePause();
+        });
+
+        this.lastTime = performance.now();
+        requestAnimationFrame((t) => this.loop(t));
+      },
+
+      handleKey(e) {
+        const t = e.target;
+        if (t && t.closest && t.closest('textarea, input, [contenteditable="true"]')) return;
+        if (!document.getElementById('editorModal').classList.contains('hidden') || !document.getElementById('pinModal').classList.contains('hidden')) return;
+        const k = (e.key || '').toLowerCase();
+        // Tastatur-Nutzer: Enter/Leertaste auf einem fokussierten Button (außer Steuer-/HUD-Buttons) normal auslösen
+        const nativeButton = t && t.tagName === 'BUTTON' && !t.closest('.controls, .hud-top');
+
+        if (k === 'p' || e.key === 'Escape') {
+          if (this.state === 'running' || this.state === 'gate' || this.state === 'paused') { e.preventDefault(); this.togglePause(); }
+          return;
+        }
+        if (this.state === 'feedback') {
+          if ((e.key === ' ' || e.key === 'Enter') && !nativeButton) { e.preventDefault(); if (!e.repeat) this.continueAfterFeedback(); }
+          return;
+        }
+        if (this.state !== 'running' && this.state !== 'gate') return;
+
+        if (e.key === 'ArrowLeft' || k === 'a') { e.preventDefault(); this.moveLane(-1); }
+        else if (e.key === 'ArrowRight' || k === 'd') { e.preventDefault(); this.moveLane(1); }
+        else if (this.state === 'gate' && ['1', '2', '3', '4'].includes(e.key)) {
+          e.preventDefault();
+          if (!e.repeat) this.selectAndConfirmLane(parseInt(e.key, 10) - 1);
+        } else if (e.key === ' ' || e.key === 'ArrowUp' || e.key === 'Enter') {
+          if (nativeButton && e.key !== 'ArrowUp') return;
+          e.preventDefault();
+          if (!e.repeat) this.handlePrimaryAction();
+        }
+        else if (k === 'f') { e.preventDefault(); if (!e.repeat) this.triggerKersBoost(); }
+        else if (k === 't' && this.state === 'gate') { e.preventDefault(); this.useHint(); }
+      },
+
+      // Baut das eigene Flugzeug-Modell in einen scharfen Offscreen-Pixelpuffer
+      buildCrispShipSprites() {
+        const makeFrame = (flameAlt, boostMode) => {
+          const palette = {
+            O: '#0b1020', // Outline
+            W: '#f1f5f9', // Rumpf & Flügel
+            T: '#0d9488', // Türkise Rennstreifen
+            Y: '#facc15', // Gelbe Flügelkanten
+            B: '#1d4ed8', // Cockpit
+            H: '#bfdbfe', // Cockpit-Glanz
+            M: '#64748b', // Triebwerk
+            y: boostMode ? '#e0f2fe' : '#fef08a',
+            F: boostMode ? '#38bdf8' : (flameAlt ? '#fbbf24' : '#f97316'),
+            f: boostMode ? '#0284c7' : (flameAlt ? '#ea580c' : '#dc2626')
+          };
+          return this.makeSprite(SPRITE_KS1_NOVA, palette);
+        };
+        this.shipSpriteA = makeFrame(false, false);
+        this.shipSpriteB = makeFrame(true, false);
+        this.shipSpriteBoost = makeFrame(false, true);
+      },
+
+      makeSprite(rows, palette) {
+        const off = document.createElement('canvas');
+        off.width = rows[0].length;
+        off.height = rows.length;
+        const octx = off.getContext('2d');
+        octx.imageSmoothingEnabled = false;
+        drawPixelMatrix(octx, rows, palette, 0, 0, 1);
+        return off;
+      },
+
+      // Alle Pixel-Figuren einmal vorrendern statt pro Frame tausende fillRect-Aufrufe
+      buildSpriteCache() {
+        const c = this.spriteCache;
+        c.guardianA = this.makeSprite(SPRITE_GUARDIAN_A, GUARDIAN_PALETTE);
+        c.guardianB = this.makeSprite(SPRITE_GUARDIAN_B, GUARDIAN_PALETTE);
+        c.asteroid = this.makeSprite(SPRITE_ASTEROID_16, { O: '#1c1917', H: '#d6d3d1', L: '#a8a29e', M: '#78716c', C: '#57534e', D: '#292524' });
+        const enemyPal = (flame) => ({ W: '#cbd5e1', R: '#e11d48', C: '#38bdf8', K: '#f59e0b', T: '#475569', F: flame });
+        c.enemyA = this.makeSprite(SPRITE_ENEMY_FIGHTER, enemyPal('#fbbf24'));
+        c.enemyB = this.makeSprite(SPRITE_ENEMY_FIGHTER, enemyPal('#ef4444'));
+        c.books = {};
+        BOOK_COLORS.forEach(bc => {
+          c.books[bc.cover] = this.makeSprite(SPRITE_BOOK_OBSTACLE, { O: '#090d16', B: bc.cover, S: bc.spine, P: '#f8fafc', Y: '#fbbf24', C: '#0284c7' });
+        });
+      },
+
+      drawSprite(ctx, sprite, x, y, pSize) {
+        ctx.imageSmoothingEnabled = false;
+        ctx.drawImage(sprite, Math.round(x), Math.round(y), sprite.width * pSize, sprite.height * pSize);
+      },
+
+      getCachedGradient(ctx, key, factory) {
+        let m = this.gradCache.get(ctx);
+        if (!m) { m = {}; this.gradCache.set(ctx, m); }
+        if (!m[key]) m[key] = factory();
+        return m[key];
+      },
+
+      setText(id, text) {
+        if (this.domCache[id] === text) return;
+        this.domCache[id] = text;
+        const el = document.getElementById(id);
+        if (el) el.textContent = text;
+      },
+
+      setPrimaryLabel(text) {
+        this.setText('primaryActionLabel', text);
+      },
+
+      resize() {
+        const frame = document.getElementById('gameFrame');
+        if (!frame || !this.canvas) return;
+        const dpr = Math.min(2, window.devicePixelRatio || 1);
+        const w = frame.clientWidth, h = frame.clientHeight;
+        if (w === this.width && h === this.height && this.canvas.width === Math.round(w * dpr)) return;
+        this.width = w;
+        this.height = h;
+        this.canvas.width = Math.round(w * dpr);
+        this.canvas.height = Math.round(h * dpr);
+        if (this.ctx) {
+          this.ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+          this.ctx.imageSmoothingEnabled = false;
+        }
+        this.gradCache.delete(this.ctx);
+        if (this.state !== 'running' && this.state !== 'gate') this.render(performance.now());
+      },
+
+      buildQuestionPool() {
+        let levels = parseQuestionsDsl(store.get(STORAGE_KEY_CUSTOM_DSL, DEFAULT_QUESTIONS_DSL)).levels;
+        if (!levels.length) levels = parseQuestionsDsl(DEFAULT_QUESTIONS_DSL).levels;
+        const shuffle = (arr) => {
+          for (let i = arr.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [arr[i], arr[j]] = [arr[j], arr[i]];
+          }
+          return arr;
+        };
+        // 1. Level = Weltall (Stufe 1), alle weiteren Level = Schulgang (Stufe 2)
+        const first = levels[0];
+        const rest = levels.slice(1);
+        const stage2 = rest.length ? rest.reduce((a, l) => a.concat(l.questions), []) : first.questions;
+        this.stagePools = { 1: shuffle(first.questions.slice()), 2: shuffle(stage2.slice()) };
+        this.levelTimes = { 1: first.baseTime, 2: rest.length ? rest[0].baseTime : first.baseTime };
+        this.stageCursors = { 1: 0, 2: 0 };
+      },
+
+      // knowledgeOnly: für Zusatz- und Rettungsfragen keine Urteilsfragen ziehen
+      getNextQuestion(knowledgeOnly = false) {
+        if (!this.stagePools[this.stage] || !this.stagePools[this.stage].length) this.buildQuestionPool();
+        const pool = this.stagePools[this.stage];
+        for (let tries = 0; tries < pool.length; tries++) {
+          const q = pool[this.stageCursors[this.stage] % pool.length];
+          this.stageCursors[this.stage]++;
+          if (!knowledgeOnly || q.type !== 'urteil') return q;
+        }
+        return pool[0];
+      },
+
+      // Falsch beantwortete Fragen kommen zwei Fragen später erneut
+      requeueQuestion(q) {
+        const pool = this.stagePools[this.stage];
+        if (!pool) return;
+        const at = Math.min(pool.length, (this.stageCursors[this.stage] % pool.length) + 2);
+        pool.splice(at, 0, q);
+      },
+
+      start() {
+        sound.init();
+        this.pendingAdvance = null;
+        this.buildQuestionPool();
+        Object.assign(this, {
+          stage: 1, stageGatesCleared: 0, stageMeters: 0, crashStormActive: false, crashStormTimer: 0,
+          distanceMeters: 0, knowledgePoints: 0, questionsSolved: 0, questionsAsked: 0,
+          shields: 3, maxShields: 4, hitCounter: 0, stage2Crashes: 0,
+          kersCharges: 3, kersBoostTimer: 0, slowdownTimer: 0, combo: 1, coinsCollected: 0,
+          jumpTime: 0, jumpsUsed: 0, jumpPeakHeight: 68, projectiles: [], particles: [], floatingTexts: [], entities: [],
+          hints: 3, hintsUsed: 0, lanes: 3, playerLane: 1, visualLane: 1,
+          rescueUsed: { 1: false, 2: false }, rescueAfterRegular: false,
+          reviewLog: [], judgmentLog: [], lockMistakes: 0, currentLockMistakes: 0,
+          victoryAchieved: false, _shuffledTrayOrder: null, prevState: null
+        });
+        ['startOverlay', 'pauseOverlay', 'endOverlay', 'phaseTransitionOverlay', 'boardLockOverlay'].forEach(id => document.getElementById(id).classList.add('hidden'));
+        document.getElementById('hudOverlay').classList.remove('hidden');
+        this.startEndlessSegment();
+      },
+
+      isSpacePhase() { return this.stage === 1; },
+      getDifficultyLevel() { return 1 + this.stageGatesCleared + Math.floor(this.stageMeters / 220) + (this.crashStormActive ? 3 : 0); },
+
+      startEndlessSegment() {
+        this.state = 'running';
+        this.lanes = 3;
+        if (this.playerLane > 2) this.playerLane = 2;
+        const diff = this.getDifficultyLevel();
+        const expectedSpeed = Math.min(365, 175 + (diff - 1) * 24);
+        // Streckenlänge skaliert mit dem Tempo, damit jede Etappe gleich lange dauert
+        const scaledDist = Math.round(2350 * (expectedSpeed / 175));
+        this.nextGateDist = this.crashStormActive ? 99999 : scaledDist;
+        this.entities = [];
+        document.getElementById('gateQuestionPanel').classList.add('hidden');
+        document.getElementById('feedbackBanner').classList.add('hidden');
+        document.getElementById('hudOverlay').classList.remove('gate-open');
+        this.setPrimaryLabel('🦘 SPRUNG');
+        this.spawnEndlessPatterns(240, this.crashStormActive ? 4500 : (this.nextGateDist - 170));
+        this.updateHud();
+      },
+
+      spawnEndlessPatterns(startDist, endDist) {
+        const diff = this.getDifficultyLevel();
+        const spacing = this.crashStormActive ? 125 : Math.max(150, 225 - diff * 10);
+        const bookColors = BOOK_COLORS;
+        let prevSafeLane = 1, patternIndex = 0;
+
+        for (let d = startDist; d < endDist; d += spacing) {
+          patternIndex++;
+          const roll = Math.random();
+
+          if (!this.crashStormActive && patternIndex % 4 === 0) {
+            const coinLane = Math.floor(Math.random() * this.lanes);
+            for (let l = 0; l < this.lanes; l++) this.entities.push({ type: 'jump_barrier', lane: l, vLane: l, dist: d, collected: false });
+            [-36, 0, 36].forEach((offset, idx) => this.entities.push({ type: 'coin', lane: coinLane, vLane: coinLane, dist: d + offset, airHeight: idx === 1 ? 42 : 22, collected: false }));
+            continue;
+          }
+
+          if (!this.crashStormActive && patternIndex % 6 === 0) {
+            const springLane = Math.floor(Math.random() * this.lanes);
+            this.entities.push({ type: 'jump_spring', lane: springLane, vLane: springLane, dist: d - 48, collected: false });
+            for (let l = 0; l < this.lanes; l++) {
+              const bs = bookColors[(d + l) % bookColors.length];
+              this.entities.push({ type: this.isSpacePhase() ? 'asteroid' : 'book_obstacle', lane: l, vLane: l, dist: d + 12, drifts: false, rotSeed: l * 2.1, bookColor: bs.cover, bookSpine: bs.spine, collected: false });
+            }
+            this.entities.push({ type: 'ks1_kers_boost', lane: springLane, vLane: springLane, dist: d + 12, airHeight: 54, collected: false });
+            continue;
+          }
+
+          if (!this.crashStormActive && roll < 0.14) {
+            const l = Math.floor(Math.random() * this.lanes);
+            this.entities.push({ type: 'shield_pickup', lane: l, vLane: l, dist: d, collected: false });
+            continue;
+          }
+
+          if (!this.crashStormActive && roll < 0.30) {
+            const cLane = Math.floor(Math.random() * this.lanes);
+            for (let k = 0; k < 3; k++) this.entities.push({ type: 'coin', lane: cLane, vLane: cLane, dist: d + k * 28, airHeight: 0, collected: false });
+            continue;
+          }
+
+          if (!this.crashStormActive && roll < 0.40) {
+            const l = Math.floor(Math.random() * this.lanes);
+            this.entities.push({ type: 'speed_pad', lane: l, vLane: l, dist: d, collected: false });
+            continue;
+          }
+
+          const obstacleType = this.isSpacePhase() ? (Math.random() < 0.35 ? 'enemy_fighter' : 'asteroid') : 'book_obstacle';
+          const doubleBlockChance = this.crashStormActive ? 0.80 : Math.min(0.55, 0.15 + (diff - 1) * 0.10);
+
+          if (Math.random() < doubleBlockChance) {
+            const safeLane = (prevSafeLane + (Math.random() > 0.5 ? 1 : 2)) % this.lanes;
+            prevSafeLane = safeLane;
+            this.entities.push({ type: 'coin', lane: safeLane, vLane: safeLane, dist: d, airHeight: 0, collected: false });
+            for (let l = 0; l < this.lanes; l++) {
+              if (l === safeLane) continue;
+              const bs = bookColors[(d + l) % bookColors.length];
+              this.entities.push({ type: obstacleType, lane: l, vLane: l, dist: d, drifts: false, rotSeed: Math.random() * 10, bookColor: bs.cover, bookSpine: bs.spine, collected: false });
+            }
+          } else {
+            const blockedLane = Math.floor(Math.random() * this.lanes);
+            const drifts = diff >= 2 && Math.random() < Math.min(0.45, 0.15 + diff * 0.06);
+            const bs = bookColors[Math.floor(Math.random() * bookColors.length)];
+            this.entities.push({ type: obstacleType, lane: blockedLane, vLane: blockedLane, dist: d, dir: Math.random() > 0.5 ? 1 : -1, drifts, rotSeed: Math.random() * 10, bookColor: bs.cover, bookSpine: bs.spine, collected: false });
+          }
+        }
+      },
+
+      moveLane(delta) {
+        if (this.state !== 'running' && this.state !== 'gate') return;
+        const maxLane = (this.state === 'gate' ? this.activeGateChoices.length : this.lanes) - 1;
+        const next = Math.max(0, Math.min(maxLane, this.playerLane + delta));
+        if (next !== this.playerLane) {
+          this.playerLane = next;
+          sound.tone(420, 0.04, 'triangle', 0.04);
+          if (this.state === 'gate') this.renderGateChoices();
+        }
+      },
+
+      handlePrimaryAction() {
+        if (this.state === 'running') {
+          if (this.jumpTime <= 0) {
+            this.jumpsUsed = 1;
+            this.jumpDuration = 0.66;
+            this.jumpPeakHeight = 68;
+            this.jumpTime = this.jumpDuration;
+            sound.jump();
+          } else if (this.jumpsUsed < this.maxJumps) {
+            this.jumpsUsed++;
+            this.jumpDuration = 0.72;
+            this.jumpPeakHeight = 104;
+            this.jumpTime = this.jumpDuration;
+            sound.jump();
+            this.spawnExplosion(this.width * 0.5, this.height * 0.76, '#38bdf8', 10);
+            this.addFloatingText('🦘 DOPPELSPRUNG!', '#7dd3fc');
+          }
+        } else if (this.state === 'gate') {
+          // Kurze Eingabesperre nach dem Erscheinen der Frage: kein versehentliches Antworten durch Dauer-Springen
+          if (performance.now() < this.gateInputReadyAt) return;
+          this.evaluateGateAnswer();
+        } else if (this.state === 'feedback') {
+          this.continueAfterFeedback();
+        }
+      },
+
+      triggerKersBoost() {
+        if (this.state !== 'running' || this.kersCharges <= 0) return;
+        this.kersCharges--;
+        this.projectiles.push({ lane: this.playerLane, vLane: this.visualLane, dist: 24, active: true });
+        this.activateKersTurbo(2.6, this.isSpacePhase() ? '⚡ LASER & TURBO!' : '✨ WÄCHTERSTAB-IMPULS!');
+        this.updateHud();
+      },
+
+      spawnExplosion(x, y, color = '#39ff14', count = 16) {
+        for (let i = 0; i < count; i++) {
+          const ang = (Math.PI * 2 * i) / count + Math.random() * 0.35;
+          const spd = 65 + Math.random() * 145;
+          this.particles.push({ x, y, vx: Math.cos(ang) * spd, vy: Math.sin(ang) * spd - 25, size: 3 + Math.random() * 3.5, color: i % 3 === 0 ? '#fde047' : color, life: 0.48 + Math.random() * 0.25 });
+        }
+      },
+
+      activateKersTurbo(seconds, message) {
+        this.kersBoostTimer = Math.max(this.kersBoostTimer, seconds);
+        this.slowdownTimer = 0;
+        sound.kersBoost();
+        this.addFloatingText(message, '#fde047');
+      },
+
+      triggerScreenShake() {
+        const frame = document.getElementById('gameFrame');
+        frame.classList.remove('shake-anim');
+        void frame.offsetWidth;
+        frame.classList.add('shake-anim');
+      },
+
+      addFloatingText(txt, color = '#fbbf24') {
+        this.floatingTexts.push({ text: txt, color, x: this.width * 0.5, y: this.height * 0.58, life: 1.2 });
+      },
+
+      enterGateState(reason = 'regular') {
+        this.state = 'gate';
+        this.gateReason = reason;
+        const q = this.getNextQuestion(reason !== 'regular');
+        this.currentQuestion = q;
+        this.hintUsedThisGate = false;
+        this.lanes = q.answers.length >= 4 ? 4 : 3;
+        if (this.playerLane >= q.answers.length) this.playerLane = q.answers.length - 1;
+        this.visualLane = this.playerLane;
+
+        const rawAnswers = q.answers.map(a => ({ ...a, eliminated: false }));
+        for (let i = rawAnswers.length - 1; i > 0; i--) {
+          const j = Math.floor(Math.random() * (i + 1));
+          [rawAnswers[i], rawAnswers[j]] = [rawAnswers[j], rawAnswers[i]];
+        }
+        this.activeGateChoices = rawAnswers;
+
+        // Bedenkzeit aus dem Level (Editor: „# Level | Sekunden“), leicht sinkend mit dem Tempo;
+        // mehr Zeit auf dem Handy und bei Quellenzitaten
+        const diff = this.getDifficultyLevel();
+        const base = this.levelTimes[this.stage] || 22;
+        let t = Math.max(base - 4, base - (diff - 1) * 0.4);
+        if (IS_TOUCH) t += 3;
+        if (q.quote) t += 5;
+        this.gateMaxTime = t;
+        this.gateTimer = t;
+        this.gateInputReadyAt = performance.now() + 700;
+        this._lastTimerPct = -1;
+
+        this.setPrimaryLabel('✔ BESTÄTIGEN');
+        const badgeEl = document.getElementById('gateBadge');
+        const counterEl = document.getElementById('gateQuestionCounter');
+        const typeTag = q.type === 'urteil' ? ' • URTEIL' : (q.type === 'quelle' ? ' • QUELLE' : '');
+        if (reason === 'hit3') {
+          badgeEl.textContent = '⚠️ ZUSATZFRAGE (3 CRASHES)' + typeTag;
+          badgeEl.style.borderColor = '#ef4444';
+          badgeEl.style.color = '#fca5a5';
+          counterEl.textContent = `Crash #${this.hitCounter} • Tempo ${diff}`;
+        } else if (reason === 'rescue') {
+          badgeEl.textContent = '🆘 RETTUNGSFRAGE – LETZTE CHANCE' + typeTag;
+          badgeEl.style.borderColor = '#ef4444';
+          badgeEl.style.color = '#fca5a5';
+          counterEl.textContent = 'Richtig = weiter mit 1 Schild';
+        } else {
+          const nextNum = Math.min(this.gatesPerStage, this.stageGatesCleared + 1);
+          badgeEl.textContent = `🚧 ${this.isSpacePhase() ? 'WELTALL' : 'SCHULGANG'}-SCHRANKE ${nextNum} / ${this.gatesPerStage}${typeTag}`;
+          badgeEl.style.borderColor = q.type === 'urteil' ? '#a78bfa' : '#fbbf24';
+          badgeEl.style.color = q.type === 'urteil' ? '#ddd6fe' : '#fde68a';
+          counterEl.textContent = `Tempo ${diff} • ${Math.round(t)} s Bedenkzeit`;
+        }
+
+        const quoteBox = document.getElementById('gateQuoteBox');
+        if (q.quote) {
+          const cut = q.quote.lastIndexOf(' – ');
+          const text = cut > 0 ? q.quote.slice(0, cut) : q.quote;
+          const src = cut > 0 ? q.quote.slice(cut + 3) : '';
+          quoteBox.innerHTML = escapeHtml(text) + (src ? `<span class="quote-src">– ${escapeHtml(src)}</span>` : '');
+          quoteBox.classList.remove('hidden');
+        } else {
+          quoteBox.classList.add('hidden');
+          quoteBox.innerHTML = '';
+        }
+
+        document.getElementById('gateQuestionText').textContent = q.question;
+        const hintBtn = document.getElementById('hintBtn');
+        hintBtn.disabled = q.type === 'urteil' || this.hints <= 0;
+        const grid = document.getElementById('gateAnswersGrid');
+        grid.className = `grid grid-cols-${q.answers.length} gap-2`;
+        this.renderGateChoices();
+        const panel = document.getElementById('gateQuestionPanel');
+        panel.classList.remove('hidden');
+        panel.scrollTop = 0;
+        document.getElementById('hudOverlay').classList.add('gate-open');
+        this.updateHud();
+      },
+
+      renderGateChoices() {
+        const grid = document.getElementById('gateAnswersGrid');
+        const focusedIdx = Array.prototype.indexOf.call(grid.children, document.activeElement);
+        grid.innerHTML = this.activeGateChoices.map((choice, idx) => {
+          const sel = idx === this.playerLane;
+          const confirmHint = IS_TOUCH ? 'Nochmal tippen = bestätigen' : 'Leertaste / Enter oder nochmal klicken = bestätigen';
+          return `
+            <button type="button" onclick="game.selectAndConfirmLane(${idx})" aria-pressed="${sel}" ${choice.eliminated ? 'aria-disabled="true"' : ''} class="retro-btn answer-btn p-3 rounded-xl border-2 text-left flex flex-col" style="background:${choice.eliminated ? 'rgba(127,29,29,0.35)' : sel ? 'rgba(251,191,36,0.22)' : 'rgba(9,13,22,0.92)'}; border-color:${sel ? '#fbbf24' : '#334155'}; opacity:${choice.eliminated ? 0.5 : 1};">
+              <div class="font-bold mb-1" style="font-size:12px; color:${sel ? '#fde047' : '#7dd3fc'};">Spur ${idx + 1}<span class="key-hint"> [Taste ${idx + 1}]</span>${sel ? ' ◀' : ''}</div>
+              <div class="answer-text font-bold" style="color:#f8fafc; text-decoration:${choice.eliminated ? 'line-through' : 'none'};">${escapeHtml(choice.text)}</div>
+              ${sel && !choice.eliminated ? `<div class="answer-confirm">${confirmHint}</div>` : ''}
+            </button>`;
+        }).join('');
+        if (focusedIdx >= 0 && grid.children[focusedIdx]) grid.children[focusedIdx].focus();
+      },
+
+      selectAndConfirmLane(idx) {
+        if (this.state !== 'gate') return;
+        const choice = this.activeGateChoices[idx];
+        if (!choice) return;
+        if (choice.eliminated) { this.addFloatingText('Diese Antwort ist gestrichen', '#fca5a5'); return; }
+        if (this.playerLane === idx) {
+          if (performance.now() < this.gateInputReadyAt) return;
+          this.evaluateGateAnswer();
+        } else {
+          this.playerLane = idx;
+          sound.tone(420, 0.04, 'triangle', 0.04);
+          this.renderGateChoices();
+        }
+      },
+
+      // Joker: streicht genau eine falsche Antwort, höchstens einmal pro Frage
+      useHint() {
+        if (this.state !== 'gate' || this.hints <= 0 || this.hintUsedThisGate) return;
+        if (!this.currentQuestion || this.currentQuestion.type === 'urteil') return;
+        const wrong = this.activeGateChoices.map((c, i) => (!c.correct && !c.eliminated ? i : -1)).filter(i => i !== -1);
+        if (wrong.length < 2) return;
+        this.activeGateChoices[wrong[Math.floor(Math.random() * wrong.length)]].eliminated = true;
+        this.hints--;
+        this.hintsUsed++;
+        this.hintUsedThisGate = true;
+        if (this.activeGateChoices[this.playerLane].eliminated) {
+          this.playerLane = this.activeGateChoices.findIndex(c => !c.eliminated);
+        }
+        document.getElementById('hintBtn').disabled = true;
+        sound.coin();
+        this.renderGateChoices();
+        this.updateHud();
+      },
+
+      evaluateGateAnswer(timedOut = false) {
+        if (this.state !== 'gate') return;
+        const q = this.currentQuestion;
+        const chosen = timedOut ? null : this.activeGateChoices[this.playerLane];
+        if (chosen && chosen.eliminated) return;
+        this.state = 'feedback';
+
+        const banner = document.getElementById('feedbackBanner');
+        const titleEl = document.getElementById('feedbackTitle');
+        const expEl = document.getElementById('feedbackExplanation');
+        document.getElementById('gateQuestionPanel').classList.add('hidden');
+        document.getElementById('hudOverlay').classList.remove('gate-open');
+        banner.classList.remove('hidden');
+
+        // Jede reguläre Schranke wird passiert (sonst Endlosschleife) – Fehler kosten Schild, Combo und Punkte
+        if (this.gateReason === 'regular') {
+          this.stageGatesCleared = Math.min(this.gatesPerStage, this.stageGatesCleared + 1);
+        }
+
+        let outcome;
+        if (q.type === 'urteil') outcome = 'opinion';
+        else outcome = (chosen && chosen.correct) ? 'right' : 'wrong';
+
+        if (outcome === 'opinion') {
+          sound.neutral();
+          if (chosen) {
+            this.knowledgePoints += POINTS.judgment;
+            this.judgmentLog.push({ question: q.question, chosen: chosen.text });
+          }
+          banner.style.borderColor = '#a78bfa';
+          titleEl.style.color = '#c4b5fd';
+          titleEl.textContent = chosen ? `🗳️ DEINE POSITION IST NOTIERT (+${POINTS.judgment} P)` : '⏰ KEINE POSITION GEWÄHLT';
+          expEl.textContent = q.explanation || 'Diskutiert eure Positionen im Unterricht.';
+        } else if (outcome === 'right') {
+          this.questionsAsked++;
+          this.questionsSolved++;
+          const gain = POINTS.correct * this.combo;
+          this.knowledgePoints += gain;
+          this.combo = Math.min(8, this.combo + 1);
+          this.shields = Math.min(this.maxShields, this.shields + 1);
+          if (q.sensitive) {
+            // Bei Flucht, Vertreibung u. Ä. kein Jubel-Feedback
+            sound.soft();
+            banner.style.borderColor = '#64748b';
+            titleEl.style.color = '#e2e8f0';
+            titleEl.textContent = `Richtig. (+${gain} P)`;
+          } else {
+            sound.correct();
+            this.kersBoostTimer = Math.max(this.kersBoostTimer, 1.3);
+            banner.style.borderColor = '#10b981';
+            titleEl.style.color = '#34d399';
+            if (this.gateReason === 'regular') titleEl.textContent = `✓ SCHRANKE ${this.stageGatesCleared}/${this.gatesPerStage} OFFEN! +${gain} P · +1 SCHILD`;
+            else if (this.gateReason === 'rescue') titleEl.textContent = `✓ GERETTET! +${gain} P`;
+            else titleEl.textContent = `✓ ZUSATZFRAGE RICHTIG! +${gain} P · +1 SCHILD`;
+          }
+          expEl.textContent = q.explanation || '';
+        } else {
+          this.questionsAsked++;
+          sound.wrong();
+          this.combo = 1;
+          this.kersBoostTimer = 0;
+          this.shields = Math.max(0, this.shields - 1);
+          this.triggerScreenShake();
+          const rightAns = (this.activeGateChoices.find(c => c.correct) || {}).text || '';
+          this.reviewLog.push({ question: q.question, chosen: chosen ? chosen.text : '(keine Antwort – Zeit abgelaufen)', right: rightAns, explanation: q.explanation || '' });
+          if (this.gateReason !== 'rescue') this.requeueQuestion(q);
+          banner.style.borderColor = '#ef4444';
+          titleEl.style.color = '#f87171';
+          const head = timedOut ? '⏰ ZEIT ABGELAUFEN' : '❌ LEIDER FALSCH';
+          titleEl.textContent = this.gateReason === 'rescue' ? `${head} – MISSION BEENDET` : `${head} (−1 SCHILD)`;
+          expEl.textContent = `Richtig ist: „${rightAns}“\n\n${q.explanation || ''}`;
+        }
+        this.updateHud();
+
+        this.pendingAdvance = () => this.advanceAfterGate(outcome);
+        this.feedbackReadyAt = performance.now() + 700;
+        this.setPrimaryLabel('WEITER ▶');
+        banner.scrollTop = 0;
+      },
+
+      continueAfterFeedback() {
+        if (this.state !== 'feedback' || !this.pendingAdvance) return;
+        if (performance.now() < this.feedbackReadyAt) return;
+        const fn = this.pendingAdvance;
+        this.pendingAdvance = null;
+        document.getElementById('feedbackBanner').classList.add('hidden');
+        fn();
+      },
+
+      advanceAfterGate(outcome) {
+        const reason = this.gateReason;
+        if (reason === 'rescue') {
+          if (outcome !== 'right') { this.endGame(false); return; }
+          this.shields = Math.max(1, this.shields);
+          if (this.rescueAfterRegular) this.afterRegularGate();
+          else this.resumeRunning();
+          return;
+        }
+        if (this.shields <= 0) {
+          this.rescueAfterRegular = reason === 'regular';
+          this.handleZeroShields();
+          return;
+        }
+        if (reason === 'regular') this.afterRegularGate();
+        else this.resumeRunning();
+      },
+
+      afterRegularGate() {
+        if (this.stageGatesCleared >= this.gatesPerStage) {
+          if (this.stage === 1) {
+            this.crashStormActive = true;
+            this.crashStormTimer = 3.2;
+            this.addFloatingText('🌍 LANDEANFLUG!', '#39ff14');
+            this.startEndlessSegment();
+          } else {
+            this.openBoardLock(2);
+          }
+        } else {
+          this.startEndlessSegment();
+        }
+      },
+
+      // Nach Zusatz- oder Rettungsfrage auf der laufenden Strecke weiterfahren
+      resumeRunning() {
+        this.nextGateDist = Math.max(this.nextGateDist, 950);
+        this.state = 'running';
+        this.lanes = 3;
+        if (this.playerLane > 2) this.playerLane = 2;
+        document.getElementById('feedbackBanner').classList.add('hidden');
+        this.setPrimaryLabel('🦘 SPRUNG');
+        this.updateHud();
+      },
+
+      // Keine Schilde mehr: einmal pro Stufe eine Rettungsfrage, danach Mission beendet
+      handleZeroShields() {
+        document.getElementById('feedbackBanner').classList.add('hidden');
+        if (!this.rescueUsed[this.stage]) {
+          this.rescueUsed[this.stage] = true;
+          this.addFloatingText('🆘 RETTUNGSFRAGE!', '#f87171');
+          this.enterGateState('rescue');
+        } else {
+          this.endGame(false);
+        }
+      },
+
+      showLevelTransition() {
+        this.state = 'transition';
+        this.stage = 2;
+        this.stageGatesCleared = 0;
+        this.stageMeters = 0;
+        this.crashStormActive = false;
+        this.crashStormTimer = 0;
+        this.shields = Math.max(this.shields, 3);
+        this.hitCounter = 0;
+        this.cutsceneStartTime = performance.now();
+        document.getElementById('transitionTitle').textContent = `LANDUNG AN DER KS1 (${Math.floor(this.distanceMeters)} m)!`;
+        document.getElementById('transitionDesc').textContent = 'Dein Gleiter steht vor der KS1, aber die Eingangstür ist verriegelt! Löse das Tafelbild-Schloss zur Potsdamer Konferenz, um einzutreten.';
+        document.getElementById('phaseTransitionOverlay').classList.remove('hidden');
+        this.updateHud();
+      },
+
+      replayLandingCutscene() { this.cutsceneStartTime = performance.now(); sound.kersBoost(); },
+
+      // ==========================================================================
+      // TAFELBILD-SCHLOSS (ZIEHEN ODER ANTIPPEN, MAUS, TOUCH UND TASTATUR)
+      // ==========================================================================
+      openBoardLock(lockId) {
+        this.state = 'boardlock';
+        this.activeBoardLockId = lockId;
+        this.boardLockSolvedSlots = {};
+        this.selectedDndCardId = null;
+        this.currentLockMistakes = 0;
+        this._shuffledTrayOrder = null;
+
+        document.getElementById('phaseTransitionOverlay').classList.add('hidden');
+        document.getElementById('hudOverlay').classList.add('hidden');
+        document.getElementById('boardLockContinueBtn').classList.add('hidden');
+
+        const def = this.boardLockDefs[lockId];
+        document.getElementById('boardLockBadge').textContent = def.badge;
+        document.getElementById('boardLockTitle').textContent = def.title;
+        document.getElementById('boardLockContinueBtn').textContent = def.continueLabel;
+        const hintBox = document.getElementById('boardLockHintBox');
+        hintBox.style.borderColor = '#334155';
+        hintBox.style.color = '#cbd5e1';
+        hintBox.textContent = IS_TOUCH
+          ? 'Tippe ein Kärtchen an und dann das passende Feld – oder zieh es hinein.'
+          : 'Zieh die Kärtchen in die passenden Felder – oder klick erst ein Kärtchen und dann das Feld an (Tastatur: Tab + Enter).';
+
+        this.renderBoardLockUI();
+        const overlay = document.getElementById('boardLockOverlay');
+        overlay.classList.remove('hidden');
+        overlay.scrollTop = 0;
+        sound.kersBoost();
+      },
+
+      getBoardLockSlots(lockId) {
+        const def = this.boardLockDefs[lockId];
+        if (lockId === 1) return def.slots;
+        const list = [];
+        def.rows.forEach(r => { list.push(r.west, r.year, r.east); });
+        (def.links || []).forEach(l => list.push(l));
+        return list;
+      },
+
+      renderBoardLockUI(focusSelector = null) {
+        const lockId = this.activeBoardLockId;
+        const allSlots = this.getBoardLockSlots(lockId);
+        const solvedCount = Object.keys(this.boardLockSolvedSlots).length;
+        document.getElementById('boardLockProgress').textContent = `${solvedCount} / ${allSlots.length}`;
+
+        const structEl = document.getElementById('boardLockStructure');
+        const makeSlotHtml = (slot, headerLabel = '', extraClass = '') => {
+          const solved = !!this.boardLockSolvedSlots[slot.id];
+          const aria = solved
+            ? `${headerLabel ? headerLabel + ': ' : ''}${slot.text} – gelöst`
+            : `${headerLabel || 'Feld'} – leer, ausgewähltes Kärtchen hier ablegen`;
+          return `
+            <button type="button" data-slot-id="${slot.id}" onclick="game.handleSlotClick('${slot.id}')" aria-label="${escapeHtml(aria)}"
+                 class="dnd-slot rounded-xl p-2 border-2 border-dashed flex flex-col justify-center ${solved ? 'slot-solved' : ''} ${extraClass}"
+                 style="background: ${solved ? 'rgba(16, 185, 129, 0.16)' : 'rgba(9, 13, 22, 0.88)'}; border-color: ${solved ? '#10b981' : '#475569'}; color: inherit; cursor: pointer;">
+              ${headerLabel ? `<div class="font-bold mb-0.5" style="font-size: 11px; color: ${solved ? '#6ee7b7' : '#7dd3fc'};">${solved ? '🔓' : '🔒'} ${escapeHtml(headerLabel)}</div>` : ''}
+              <div class="text-xs font-bold" style="color: ${solved ? '#ecfdf5' : '#94a3b8'}; line-height: 1.25;">
+                ${solved ? escapeHtml(slot.text) : 'Hierhin ziehen …'}
+              </div>
+            </button>`;
+        };
+
+        if (lockId === 1) {
+          const s = this.boardLockDefs[1].slots;
+          structEl.innerHTML = `
+            <div class="text-center mb-2">
+              <span class="inline-block px-4 py-1.5 rounded-xl font-extrabold text-xs border-2" style="background: #1e1b4b; border-color: #fbbf24; color: #fde047;">
+                🏛️ POTSDAMER KONFERENZ (Juli / August 1945)
+              </span>
+            </div>
+            <div class="grid grid-cols-2 gap-2 mb-2">
+              ${makeSlotHtml(s[0], s[0].label)}
+              ${makeSlotHtml(s[1], s[1].label)}
+            </div>
+            <div class="grid grid-cols-2 gap-2 mb-2">
+              ${makeSlotHtml(s[2], s[2].label)}
+              ${makeSlotHtml(s[3], s[3].label)}
+            </div>
+            <div>
+              ${makeSlotHtml(s[4], s[4].label)}
+            </div>`;
+        } else {
+          const def = this.boardLockDefs[2];
+          const links = def.links || [];
+          structEl.innerHTML = `
+            <div class="text-center mb-1.5">
+              <span class="inline-block px-3 py-1 rounded-lg font-extrabold text-xs border" style="background: #1e1b4b; border-color: #fbbf24; color: #fde047;">
+                POTSDAM 1945 ➔ ZWEI DEUTSCHE WEGE
+              </span>
+            </div>
+            <div class="grid grid-cols-3 gap-1.5 text-center mb-1 font-extrabold" style="font-size: 11px;">
+              <div class="py-1 rounded" style="background: rgba(2, 132, 199, 0.22); color: #7dd3fc;">WESTZONEN</div>
+              <div class="py-1 rounded" style="background: rgba(251, 191, 36, 0.18); color: #fde047;">JAHR</div>
+              <div class="py-1 rounded" style="background: rgba(225, 29, 72, 0.22); color: #fda4af;">SBZ</div>
+            </div>
+            <div class="flex flex-col gap-1.5">
+              ${def.rows.map((r, i) => `
+                <div class="grid grid-cols-3 gap-1.5">
+                  ${makeSlotHtml(r.west)}
+                  ${makeSlotHtml(r.year)}
+                  ${makeSlotHtml(r.east)}
+                </div>
+                ${links[i] ? `
+                <div class="flex items-center gap-1.5">
+                  <span aria-hidden="true" style="color: #c084fc; font-weight: 900; font-size: 18px;">⬇</span>
+                  ${makeSlotHtml(links[i], `VERKNÜPFUNG ${i + 1} → ${i + 2}: WARUM GING ES SO WEITER?`, 'flex-1')}
+                </div>` : ''}`).join('')}
+            </div>`;
+        }
+
+        // Noch ungelöste Karten gemischt im Vorrat anzeigen
+        const remaining = allSlots.filter(s => !this.boardLockSolvedSlots[s.id]);
+        if (!this._shuffledTrayOrder || this._shuffledTrayLockId !== lockId) {
+          this._shuffledTrayLockId = lockId;
+          const order = allSlots.map(s => s.id);
+          for (let i = order.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [order[i], order[j]] = [order[j], order[i]];
+          }
+          this._shuffledTrayOrder = order;
+        }
+        remaining.sort((a, b) => this._shuffledTrayOrder.indexOf(a.id) - this._shuffledTrayOrder.indexOf(b.id));
+
+        const trayEl = document.getElementById('boardLockCardTray');
+        if (remaining.length === 0) {
+          trayEl.innerHTML = `<div class="text-xs font-extrabold py-2" style="color: #39ff14;">✨ ALLE SCHLÖSSER GEKNACKT! DIE TÜR STEHT OFFEN! ✨</div>`;
+          const btn = document.getElementById('boardLockContinueBtn');
+          btn.classList.remove('hidden');
+          btn.focus({ preventScroll: false });
+        } else {
+          trayEl.innerHTML = remaining.map(card => {
+            const isSel = this.selectedDndCardId === card.id;
+            const isLink = card.id.startsWith('k2_');
+            return `
+              <button type="button" data-card-id="${card.id}" aria-pressed="${isSel}"
+                   onpointerdown="game.cardPointerDown(event, '${card.id}')"
+                   onclick="game.cardClick(event, '${card.id}')"
+                   class="dnd-card px-2.5 py-1.5 rounded-lg border-2 text-xs font-bold ${isSel ? 'selected-card' : ''}"
+                   style="background: ${isLink ? '#3b0764' : '#1e293b'}; border-color: ${isLink ? '#c084fc' : '#38bdf8'}; color: #f8fafc;">
+                ${isLink ? '🔗 ' : '📄 '}${escapeHtml(card.text)}
+              </button>`;
+          }).join('');
+        }
+        if (focusSelector) {
+          const el = document.querySelector(focusSelector);
+          if (el) el.focus();
+        }
+      },
+
+      selectBoardCard(cardId, fromKeyboard = false) {
+        this.selectedDndCardId = (this.selectedDndCardId === cardId) ? null : cardId;
+        sound.tone(480, 0.04, 'triangle', 0.04);
+        this.renderBoardLockUI(fromKeyboard ? `[data-card-id="${cardId}"]` : null);
+      },
+
+      // Tastatur-Klicks (detail === 0) wählen aus; Maus/Touch laufen über Pointer-Events
+      cardClick(e, cardId) {
+        if (e.detail === 0) this.selectBoardCard(cardId, true);
+      },
+
+      handleSlotClick(slotId) {
+        if (this.boardLockSolvedSlots[slotId]) return;
+        if (this.selectedDndCardId) {
+          this.handleBoardDrop(this.selectedDndCardId, slotId);
+        } else {
+          const hintBox = document.getElementById('boardLockHintBox');
+          hintBox.style.borderColor = '#38bdf8';
+          hintBox.style.color = '#7dd3fc';
+          hintBox.textContent = '💡 Wähle zuerst unten ein Kärtchen aus und lege es dann hier ab.';
+        }
+      },
+
+      getDragGhost() {
+        let ghost = document.getElementById('dndTouchGhost');
+        if (!ghost) {
+          ghost = document.createElement('div');
+          ghost.id = 'dndTouchGhost';
+          ghost.className = 'hidden';
+          ghost.setAttribute('aria-hidden', 'true');
+          ghost.style.cssText = 'position:fixed; z-index:9999; pointer-events:none; padding:6px 10px; border-radius:8px; background:#0f172a; border:2px solid #fde047; color:#fff; font-size:12px; font-weight:800; box-shadow:0 8px 20px rgba(0,0,0,0.8); max-width:240px;';
+          document.body.appendChild(ghost);
+        }
+        return ghost;
+      },
+
+      clearDragOver() {
+        document.querySelectorAll('.dnd-slot.drag-over').forEach(el => el.classList.remove('drag-over'));
+      },
+
+      cardPointerDown(e, cardId) {
+        if (e.pointerType === 'mouse' && e.button !== 0) return;
+        const el = e.currentTarget;
+        this.dragInfo = { cardId, startX: e.clientX, startY: e.clientY, dragging: false, el };
+        try { el.setPointerCapture(e.pointerId); } catch (err) {}
+        el.onpointermove = (ev) => this.cardPointerMove(ev);
+        el.onpointerup = (ev) => this.cardPointerUp(ev);
+        el.onpointercancel = () => this.cardPointerCancel();
+      },
+
+      cardPointerMove(e) {
+        const d = this.dragInfo;
+        if (!d) return;
+        const dx = e.clientX - d.startX, dy = e.clientY - d.startY;
+        if (!d.dragging && Math.hypot(dx, dy) > 8) {
+          d.dragging = true;
+          const ghost = this.getDragGhost();
+          ghost.textContent = d.el.textContent.trim();
+          ghost.classList.remove('hidden');
+        }
+        if (!d.dragging) return;
+        e.preventDefault();
+        const ghost = this.getDragGhost();
+        ghost.style.left = (e.clientX - 60) + 'px';
+        ghost.style.top = (e.clientY - 28) + 'px';
+        this.clearDragOver();
+        const target = document.elementFromPoint(e.clientX, e.clientY);
+        const slot = target ? target.closest('[data-slot-id]') : null;
+        if (slot && !slot.classList.contains('slot-solved')) slot.classList.add('drag-over');
+      },
+
+      endCardDrag() {
+        const d = this.dragInfo;
+        this.dragInfo = null;
+        if (d && d.el) { d.el.onpointermove = null; d.el.onpointerup = null; d.el.onpointercancel = null; }
+        this.getDragGhost().classList.add('hidden');
+        this.clearDragOver();
+        return d;
+      },
+
+      cardPointerUp(e) {
+        const d = this.endCardDrag();
+        if (!d) return;
+        if (d.dragging) {
+          const target = document.elementFromPoint(e.clientX, e.clientY);
+          const slot = target ? target.closest('[data-slot-id]') : null;
+          if (slot) this.handleBoardDrop(d.cardId, slot.getAttribute('data-slot-id'));
+          else { this.selectedDndCardId = null; this.renderBoardLockUI(); }
+        } else {
+          this.selectBoardCard(d.cardId);
+        }
+      },
+
+      cardPointerCancel() {
+        this.endCardDrag();
+      },
+
+      handleBoardDrop(cardId, slotId) {
+        if (!cardId || !slotId || this.boardLockSolvedSlots[slotId]) return;
+        const allSlots = this.getBoardLockSlots(this.activeBoardLockId);
+        const targetSlot = allSlots.find(s => s.id === slotId);
+        const draggedCard = allSlots.find(s => s.id === cardId);
+        if (!targetSlot || !draggedCard) return;
+
+        const hintBox = document.getElementById('boardLockHintBox');
+        if (cardId === slotId) {
+          this.boardLockSolvedSlots[slotId] = true;
+          this.selectedDndCardId = null;
+          sound.coin();
+          hintBox.style.borderColor = '#10b981';
+          hintBox.style.color = '#6ee7b7';
+          hintBox.textContent = `✓ Richtig eingerastet! ${targetSlot.hint}`;
+          this.renderBoardLockUI();
+          if (Object.keys(this.boardLockSolvedSlots).length === allSlots.length) sound.correct();
+        } else {
+          sound.wrong();
+          this.lockMistakes++;
+          this.currentLockMistakes++;
+          this.selectedDndCardId = null;
+          hintBox.style.borderColor = '#ef4444';
+          hintBox.style.color = '#fca5a5';
+          hintBox.textContent = `❌ Passt hier noch nicht. Tipp zu deinem Kärtchen: ${draggedCard.hint}`;
+          this.renderBoardLockUI();
+        }
+      },
+
+      completeBoardLock() {
+        document.getElementById('boardLockOverlay').classList.add('hidden');
+        this._shuffledTrayOrder = null;
+        if (this.currentLockMistakes === 0) this.knowledgePoints += POINTS.cleanLock;
+        if (this.activeBoardLockId === 1) {
+          document.getElementById('hudOverlay').classList.remove('hidden');
+          this.startEndlessSegment();
+          if (this.currentLockMistakes === 0) this.addFloatingText(`🔓 FEHLERFREI! +${POINTS.cleanLock} P`, '#39ff14');
+        } else {
+          this.endGame(true);
+        }
+      },
+
+      togglePause() {
+        if (this.state === 'running' || this.state === 'gate') {
+          this.prevState = this.state;
+          this.state = 'paused';
+          document.getElementById('pauseOverlay').classList.remove('hidden');
+          const btn = document.getElementById('pauseResumeBtn');
+          if (btn && !IS_TOUCH) btn.focus({ preventScroll: true });
+        } else if (this.state === 'paused') {
+          this.state = this.prevState || 'running';
+          if (this.state === 'gate') this.gateInputReadyAt = performance.now() + 400;
+          document.getElementById('pauseOverlay').classList.add('hidden');
+          this.lastTime = performance.now();
+        }
+      },
+
+      backToMenu() {
+        this.pendingAdvance = null;
+        this.endCardDrag();
+        this.state = 'menu';
+        this.stage = 1;
+        this.entities = [];
+        ['hudOverlay', 'pauseOverlay', 'endOverlay', 'phaseTransitionOverlay', 'boardLockOverlay', 'gateQuestionPanel', 'feedbackBanner'].forEach(id => document.getElementById(id).classList.add('hidden'));
+        document.getElementById('startOverlay').classList.remove('hidden');
+        this.setPrimaryLabel('🦘 SPRUNG');
+        app.updateBestBadge();
+      },
+
+      endGame(victory = false) {
+        this.state = 'ended';
+        this.victoryAchieved = victory;
+        this.cutsceneStartTime = performance.now();
+        document.getElementById('hudOverlay').classList.add('hidden');
+        document.getElementById('gateQuestionPanel').classList.add('hidden');
+        document.getElementById('feedbackBanner').classList.add('hidden');
+        const overlay = document.getElementById('endOverlay');
+        overlay.classList.remove('hidden');
+        overlay.scrollTop = 0;
+        this.setPrimaryLabel('🦘 SPRUNG');
+
+        if (victory) this.knowledgePoints += POINTS.victory;
+        const meters = Math.floor(this.distanceMeters);
+        const score = meters + this.knowledgePoints;
+        let best = app.getBest();
+        const newRecord = score > best;
+        if (newRecord) { best = score; store.set(STORAGE_KEY_BEST, String(best)); }
+
+        const where = this.stage === 1 ? 'IM WELTALL' : 'IM SCHULGANG';
+        document.getElementById('endEmoji').textContent = victory ? '✨ FINALE IN DER KS1 ✨' : `🏁 MISSION ${where} BEENDET`;
+        document.getElementById('endTitle').textContent = victory ? 'DIE QUELLEN-CHRONIK IST ZURÜCK!' : `SCHRANKE ${this.stageGatesCleared}/${this.gatesPerStage} ${where} ERREICHT`;
+        document.getElementById('endSubtitle').textContent = victory
+          ? `Geschafft! ${score} Punkte${newRecord ? ' – neuer Rekord!' : ''}`
+          : `${score} Punkte${newRecord ? ' – neuer Rekord!' : ''}. Schau dir unten deine Fehler an und versuch es nochmal!`;
+        document.getElementById('endScoreText').textContent = String(score);
+        document.getElementById('endCorrectText').textContent = `${this.questionsSolved} / ${this.questionsAsked}`;
+        document.getElementById('endBestText').textContent = String(best);
+        document.getElementById('endBreakdown').textContent = `${meters} m Strecke + ${this.knowledgePoints} Wissenspunkte${victory ? ' (inkl. Sieg-Bonus)' : ''} · Joker benutzt: ${this.hintsUsed} · Fehlversuche im Tafelbild: ${this.lockMistakes}`;
+
+        // Abzeichen (nur lokal in diesem Browser gespeichert)
+        const earned = [];
+        if (victory && this.hintsUsed === 0) earned.push('noJoker');
+        if (this.questionsAsked >= 6 && this.questionsSolved === this.questionsAsked) earned.push('perfect');
+        if (victory && this.lockMistakes === 0) earned.push('cleanLocks');
+        if (victory && this.stage2Crashes === 0) earned.push('noCrash');
+        let saved = [];
+        try { saved = JSON.parse(store.get(STORAGE_KEY_BADGES, '[]')) || []; } catch (e) { saved = []; }
+        const fresh = earned.filter(b => !saved.includes(b));
+        const all = Array.from(new Set(saved.concat(earned))).filter(b => BADGE_DEFS[b]);
+        store.set(STORAGE_KEY_BADGES, JSON.stringify(all));
+        document.getElementById('endBadges').innerHTML = (earned.length
+          ? earned.map(b => `<span class="badge-chip">${fresh.includes(b) ? 'NEU: ' : ''}${BADGE_DEFS[b]}</span>`).join('')
+          : '') + `<div class="text-xs mt-1" style="color:#cbd5e1;">Abzeichen gesammelt: ${all.length} / ${Object.keys(BADGE_DEFS).length}</div>`;
+
+        const reviewWrap = document.getElementById('endReviewWrap');
+        if (this.reviewLog.length) {
+          document.getElementById('endReviewList').innerHTML = this.reviewLog.map(r => `
+            <div class="review-item">
+              <div style="font-weight:800; color:#f8fafc; margin-bottom:3px;">${escapeHtml(r.question)}</div>
+              <div style="color:#fca5a5;">Deine Antwort: ${escapeHtml(r.chosen)}</div>
+              <div style="color:#6ee7b7;">Richtig: ${escapeHtml(r.right)}</div>
+              ${r.explanation ? `<div style="color:#cbd5e1; margin-top:3px;">${escapeHtml(r.explanation)}</div>` : ''}
+            </div>`).join('');
+          reviewWrap.classList.remove('hidden');
+        } else {
+          reviewWrap.classList.add('hidden');
+        }
+
+        const judgeWrap = document.getElementById('endJudgeWrap');
+        if (this.judgmentLog.length) {
+          document.getElementById('endJudgeList').innerHTML = this.judgmentLog.map(j => `
+            <div class="review-item">
+              <div style="font-weight:800; color:#f8fafc; margin-bottom:3px;">${escapeHtml(j.question)}</div>
+              <div style="color:#c4b5fd;">Deine Position: ${escapeHtml(j.chosen)}</div>
+              <div style="color:#cbd5e1;">Begründe sie mit zwei Belegen und nenne ein Gegenargument.</div>
+            </div>`).join('');
+          judgeWrap.classList.remove('hidden');
+        } else {
+          judgeWrap.classList.add('hidden');
+        }
+        app.updateBestBadge();
+      },
+
+      updateHud() {
+        const space = this.isSpacePhase();
+        this.setText('hudPhaseIcon', space ? '🚀' : '🚪');
+        this.setText('hudLevelTitle', space
+          ? (this.crashStormActive ? 'Stufe 1: Landeanflug!' : 'Stufe 1: Weltall')
+          : 'Stufe 2: Schulgang');
+        this.setText('hudDistanceText', `Tor ${this.stageGatesCleared} / ${this.gatesPerStage}`);
+        this.setText('hudHintCount', String(this.hints));
+        this.setText('hudComboText', `🔥 x${this.combo}`);
+        this.setText('hudShieldIcons', '🛡️'.repeat(Math.max(0, this.shields)) + '⚪'.repeat(Math.max(0, this.maxShields - this.shields)));
+        document.getElementById('hudShieldIcons').setAttribute('aria-label', `${this.shields} von ${this.maxShields} Schilden`);
+        document.getElementById('hudShieldBox').style.borderColor = this.shields <= 1 ? '#ef4444' : '#38bdf8';
+        this.setText('kersBtnLabel', `⚡ ${this.kersCharges}`);
+        document.getElementById('kersBtn').disabled = this.kersCharges <= 0;
+        document.getElementById('kersBtn').setAttribute('aria-label', `Laser abfeuern, noch ${this.kersCharges} Ladungen`);
+        this.updateLiveHud();
+      },
+
+      updateLiveHud() {
+        this.setText('hudScoreText', `⭐ ${Math.floor(this.distanceMeters) + this.knowledgePoints} P`);
+        this.setText('hudSubInfo', this.crashStormActive
+          ? 'Eintritt in die Atmosphäre …'
+          : `Nächste Schranke in ${Math.max(0, Math.round(this.nextGateDist / 10))} m • Tempo ${this.getDifficultyLevel()}`);
+      },
+
+      loop(now) {
+        const dt = Math.min(0.05, (now - this.lastTime) / 1000);
+        this.lastTime = now;
+        this.frameCount++;
+        this.update(dt);
+        // Hauptszene nur im Spiel mit voller Rate, sonst gedrosselt (spart Akku)
+        const active = this.state === 'running' || this.state === 'gate';
+        if (active || this.frameCount % 4 === 0) this.render(now);
+        if (this.state === 'transition') this.renderLandingCutscene(now);
+        else if (this.state === 'boardlock') this.renderBoardLockScene(now);
+        else if (this.state === 'ended') this.renderBookFinaleCutscene(now);
+        requestAnimationFrame((t) => this.loop(t));
+      },
+
+      // ==========================================================================
+      // 8-BIT SZENE FÜR TAFELBILD-SCHLOSS 1 (LANDESCHIFF & KS1-TÜR) & 2 (ARCHIVTÜR)
+      // ==========================================================================
+      renderBoardLockScene(now) {
+        const cvs = document.getElementById('boardLockSceneCanvas');
+        if (!cvs) return;
+        const ctx = cvs.getContext('2d');
+        const w = cvs.width, h = cvs.height;
+        ctx.imageSmoothingEnabled = false;
+
+        const allSlots = this.getBoardLockSlots(this.activeBoardLockId);
+        const solvedCount = Object.keys(this.boardLockSolvedSlots).length;
+        const unlocked = solvedCount === allSlots.length;
+
+        if (this.activeBoardLockId === 1) {
+          // Hintergrund: Abendhimmel vor dem KS1-Schulgebäude + gelandetes Raumschiff + verschlossene Ausgangs-/Eingangstür
+          ctx.fillStyle = '#140e2b';
+          ctx.fillRect(0, 0, w, h);
+          ctx.fillStyle = '#15803d';
+          ctx.fillRect(0, h - 14, w, 14);
+
+          // Gelandetes KS1-Nova Raumschiff links auf dem Schulhof
+          ctx.save();
+          ctx.translate(105, h - 38);
+          ctx.scale(0.68, 0.68);
+          this.drawKs1NovaShip(ctx, 0, 0, now);
+          ctx.restore();
+
+          // KS1-Schulgebäude rechts mit großer verriegelter Eingangstür
+          const bx = 250, bw = 350, bh = 74;
+          ctx.fillStyle = '#7c2d12';
+          ctx.fillRect(bx, h - 14 - bh, bw, bh);
+          ctx.fillStyle = '#334155';
+          ctx.fillRect(bx - 6, h - 14 - bh - 6, bw + 12, 8);
+          this.drawKs1Sign(ctx, bx + bw * 0.5, h - 14 - bh - 4, 0.58);
+
+          // Verschlossene / sich öffnende Eingangstür
+          const dx = bx + 135, dy = h - 14 - 48, dw = 80, dh = 48;
+          ctx.fillStyle = '#090d16';
+          ctx.fillRect(dx, dy, dw, dh);
+          if (!unlocked) {
+            ctx.fillStyle = '#1e3a8a';
+            ctx.fillRect(dx + 4, dy + 4, 34, dh - 6);
+            ctx.fillRect(dx + 42, dy + 4, 34, dh - 6);
+            // Rote/Goldene Sicherheitsriegel je nach gelösten Schlössern
+            ctx.fillStyle = '#ef4444';
+            ctx.fillRect(dx + 10, dy + 22, 60 - solvedCount * 10, 6);
+            ctx.fillStyle = '#fbbf24';
+            ctx.fillRect(dx + 34, dy + 17, 12, 14);
+          } else {
+            ctx.fillStyle = '#39ff14';
+            ctx.fillRect(dx + 12, dy + 4, dw - 24, dh - 4);
+          }
+
+          // Wächter steht vor der Tür
+          ctx.save();
+          ctx.translate(dx - 28, h - 12);
+          ctx.scale(0.65, 0.65);
+          this.drawGuardianModel1FromBack(ctx, 0, 0, now);
+          ctx.restore();
+        } else {
+          // Szene 2: Schweres KS1-Archivtor vor dem Buch der deutschen Geschichte
+          ctx.fillStyle = '#0c0a1d';
+          ctx.fillRect(0, 0, w, h);
+          ctx.fillStyle = '#1e1b38';
+          ctx.fillRect(0, h - 14, w, 14);
+
+          const ax = w * 0.5 - 70, ay = 14, aw = 140, ah = h - 28;
+          ctx.fillStyle = '#312e81';
+          ctx.strokeStyle = '#fbbf24';
+          ctx.lineWidth = 2;
+          ctx.fillRect(ax, ay, aw, ah);
+          ctx.strokeRect(ax, ay, aw, ah);
+
+          if (!unlocked) {
+            ctx.fillStyle = '#e11d48';
+            const barW = Math.max(8, 110 - solvedCount * 8);
+            ctx.fillRect(w * 0.5 - barW * 0.5, ay + ah * 0.46, barW, 8);
+            ctx.fillStyle = '#fde047';
+            ctx.font = '900 11px monospace';
+            ctx.textAlign = 'center';
+            ctx.fillText(`🔒 ARCHIV-TRESOR (${solvedCount}/${allSlots.length})`, w * 0.5, ay + ah * 0.34);
+          } else {
+            ctx.fillStyle = '#fbbf24';
+            ctx.fillRect(w * 0.5 - 22, ay + 24, 44, 26);
+            ctx.fillStyle = '#39ff14';
+            ctx.font = '900 11px monospace';
+            ctx.textAlign = 'center';
+            ctx.fillText('✨ DIE QUELLEN-CHRONIK IST FREI! ✨', w * 0.5, ay + 16);
+          }
+
+          ctx.save();
+          ctx.translate(ax - 36, h - 12);
+          ctx.scale(0.65, 0.65);
+          this.drawGuardianModel1FromBack(ctx, 0, 0, now);
+          ctx.restore();
+        }
+      },
+
+      getJumpOffset() {
+        return this.jumpTime > 0 ? Math.sin((1 - this.jumpTime / this.jumpDuration) * Math.PI) * this.jumpPeakHeight : 0;
+      },
+
+      update(dt) {
+        if (this.state === 'paused') return;
+        this.visualLane += (this.playerLane - this.visualLane) * Math.min(1, dt * 14);
+        if (this.jumpTime > 0) {
+          this.jumpTime = Math.max(0, this.jumpTime - dt);
+          if (this.jumpTime === 0) { this.jumpsUsed = 0; this.jumpPeakHeight = 68; }
+        }
+
+        for (let i = this.floatingTexts.length - 1; i >= 0; i--) {
+          this.floatingTexts[i].y -= 42 * dt;
+          this.floatingTexts[i].life -= dt;
+          if (this.floatingTexts[i].life <= 0) this.floatingTexts.splice(i, 1);
+        }
+
+        for (let i = this.particles.length - 1; i >= 0; i--) {
+          const pt = this.particles[i];
+          pt.x += pt.vx * dt;
+          pt.y += pt.vy * dt;
+          pt.vy += 220 * dt;
+          pt.life -= dt;
+          if (pt.life <= 0) this.particles.splice(i, 1);
+        }
+
+        if (this.state === 'running') {
+          if (this.kersBoostTimer > 0) this.kersBoostTimer = Math.max(0, this.kersBoostTimer - dt);
+          if (this.slowdownTimer > 0) this.slowdownTimer = Math.max(0, this.slowdownTimer - dt);
+
+          const diff = this.getDifficultyLevel();
+          this.baseSpeed = Math.min(365, 175 + (diff - 1) * 24);
+          const mult = this.kersBoostTimer > 0 ? 1.55 : (this.slowdownTimer > 0 ? 0.7 : 1.0);
+          const turbo = this.kersBoostTimer > 0;
+          const kmh = Math.round(this.baseSpeed * mult);
+          this.setText('hudKersStatus', turbo ? `🔥 TURBO ${kmh} km/h` : `${kmh} km/h`);
+          if (this._turboStyle !== turbo) {
+            this._turboStyle = turbo;
+            const kersEl = document.getElementById('hudKersStatus');
+            kersEl.style.background = turbo ? 'rgba(251, 191, 36, 0.3)' : 'rgba(56, 189, 248, 0.2)';
+            kersEl.style.color = turbo ? '#fde047' : '#7dd3fc';
+          }
+
+          this.currentSpeed = this.baseSpeed * mult;
+          const step = this.currentSpeed * dt;
+          this.scrollPos += step;
+          this.nextGateDist -= step;
+          this.distanceMeters += step * 0.085;
+          this.stageMeters += step * 0.085;
+          if (this.frameCount % 10 === 0) this.updateLiveHud();
+
+          if (this.crashStormActive && this.stage === 1) {
+            this.crashStormTimer -= dt;
+            if (this.crashStormTimer <= 0) { this.showLevelTransition(); return; }
+          }
+
+          for (let pIdx = this.projectiles.length - 1; pIdx >= 0; pIdx--) {
+            const proj = this.projectiles[pIdx];
+            proj.dist += 520 * dt;
+            if (proj.dist > 740) { this.projectiles.splice(pIdx, 1); continue; }
+            for (const e of this.entities) {
+              if (!e.collected && HITTABLE_TYPES.has(e.type) &&
+                  Math.abs(e.vLane - proj.vLane) < 0.48 && Math.abs(e.dist - proj.dist) < 44) {
+                e.collected = true;
+                this.projectiles.splice(pIdx, 1);
+                sound.coin();
+                this.combo = Math.min(8, this.combo + 1);
+                this.distanceMeters += 12 * this.combo;
+                this.spawnExplosion(this.width * 0.5, this.height * 0.52, '#39ff14', 18);
+                this.addFloatingText(`💥 +${12 * this.combo} m`, '#39ff14');
+                this.updateHud();
+                break;
+              }
+            }
+          }
+
+          const jumpOff = this.getJumpOffset();
+          for (const e of this.entities) {
+            if (e.collected) continue;
+            e.dist -= step;
+
+            if (OBSTACLE_TYPES.has(e.type) && e.drifts) {
+              e.vLane += e.dir * dt * (0.38 + diff * 0.04);
+              if (e.vLane <= 0.05) { e.vLane = 0.05; e.dir = 1; }
+              if (e.vLane >= this.lanes - 1.05) { e.vLane = this.lanes - 1.05; e.dir = -1; }
+              e.lane = Math.round(e.vLane);
+            }
+
+            if (!e.nearMissChecked && e.dist < -18 && OBSTACLE_TYPES.has(e.type)) {
+              e.nearMissChecked = true;
+              const laneDiff = Math.abs(e.vLane - this.visualLane);
+              if (laneDiff >= 0.41 && laneDiff <= 1.05) {
+                this.combo = Math.min(8, this.combo + 1);
+                this.distanceMeters += 5 * this.combo;
+                this.updateHud();
+              }
+            }
+
+            // Jedes Objekt wird genau einmal beim Passieren der Spielerlinie ausgewertet
+            if (e.resolved || e.dist >= 4) continue;
+            e.resolved = true;
+            if (Math.abs(e.vLane - this.visualLane) >= 0.44) continue;
+
+            if (e.type === 'coin') {
+              // Münzen in der Luft gibt es nur im Sprung, Bodenmünzen nur am Boden
+              if (Math.abs(jumpOff - (e.airHeight || 0)) > 30) continue;
+              e.collected = true;
+              sound.coin();
+              this.coinsCollected++;
+              this.distanceMeters += 6 * this.combo;
+              if (this.coinsCollected % 10 === 0) {
+                this.shields = Math.min(this.maxShields, this.shields + 1);
+                this.addFloatingText('🪙 10 MÜNZEN! +1 SCHILD', '#fde047');
+              } else {
+                this.addFloatingText(`🪙 +${6 * this.combo} m (${this.coinsCollected % 10}/10)`, '#fde047');
+              }
+              this.updateHud();
+            } else if (e.type === 'jump_spring') {
+              if (jumpOff > 20) continue;
+              e.collected = true;
+              this.jumpsUsed = 1; this.jumpDuration = 0.88; this.jumpPeakHeight = 122; this.jumpTime = 0.88;
+              sound.kersBoost();
+              this.spawnExplosion(this.width * 0.5, this.height * 0.80, '#39ff14', 14);
+              this.addFloatingText('🟢 SPRUNGFEDER!', '#39ff14');
+            } else if (e.type === 'shield_pickup') {
+              e.collected = true;
+              sound.coin();
+              if (this.shields < this.maxShields) { this.shields++; this.addFloatingText('🛡️ +1 SCHILD', '#38bdf8'); }
+              else { this.distanceMeters += 20; this.addFloatingText('🛡️ SCHILD VOLL! +20 m', '#38bdf8'); }
+              this.updateHud();
+            } else if (e.type === 'ks1_kers_boost') {
+              e.collected = true;
+              this.activateKersTurbo(2.4, '⚡ KS1-TURBO!');
+              this.updateHud();
+            } else if (e.type === 'speed_pad') {
+              if (jumpOff > 20) continue;
+              e.collected = true;
+              this.combo = Math.min(8, this.combo + 1);
+              this.activateKersTurbo(1.4, `>>> TURBO! KOMBO x${this.combo}`);
+              this.updateHud();
+            } else if (HITTABLE_TYPES.has(e.type)) {
+              // Nur wer im Moment des Passierens hoch genug ist, springt drüber
+              if (jumpOff > 24) {
+                e.collected = true;
+                this.distanceMeters += 10;
+                this.addFloatingText('🦘 DRÜBER! +10 m', '#6ee7b7');
+                continue;
+              }
+              if (this.kersBoostTimer > 0) {
+                e.collected = true;
+                sound.coin();
+                this.spawnExplosion(this.width * 0.5, this.height * 0.78, '#fbbf24', 14);
+                this.addFloatingText('💥 TURBO-DURCHBRUCH!', '#fde047');
+                continue;
+              }
+              e.collected = true;
+              sound.wrong();
+              this.triggerScreenShake();
+              this.combo = 1;
+              this.slowdownTimer = 1.1;
+              this.shields = Math.max(0, this.shields - 1);
+              this.hitCounter++;
+              if (this.stage === 2) this.stage2Crashes++;
+              this.spawnExplosion(this.width * 0.5, this.height * 0.82, '#ef4444', 14);
+              this.updateHud();
+
+              if (this.shields <= 0) { this.rescueAfterRegular = false; this.handleZeroShields(); return; }
+              else if (!this.crashStormActive && this.hitCounter % 3 === 0) {
+                this.addFloatingText('⚠️ 3. CRASH: ZUSATZFRAGE!', '#f87171');
+                this.enterGateState('hit3');
+                return;
+              } else {
+                this.addFloatingText(`💥 −1 SCHILD (${3 - (this.hitCounter % 3)} bis Zusatzfrage)`, '#f87171');
+              }
+            }
+          }
+
+          this.entities = this.entities.filter(e => !e.collected && e.dist > -80);
+          if (!this.crashStormActive && this.nextGateDist <= 0) { this.enterGateState('regular'); return; }
+        } else if (this.state === 'gate') {
+          this.gateTimer -= dt;
+          this.setText('gateTimerText', `${Math.max(0, this.gateTimer).toFixed(1)}s`);
+          const pct = Math.round(Math.max(0, Math.min(100, (this.gateTimer / this.gateMaxTime) * 100)) * 2) / 2;
+          if (pct !== this._lastTimerPct) {
+            this._lastTimerPct = pct;
+            document.getElementById('gateTimerBar').style.width = `${pct}%`;
+          }
+          if (this.gateTimer <= 0) this.evaluateGateAnswer(true);
+        }
+      },
+
+      // ==========================================================================
+      // HAUPT-RENDERER
+      // ==========================================================================
+      render(now) {
+        const ctx = this.ctx;
+        if (!ctx) return;
+        const w = this.width, h = this.height;
+        ctx.imageSmoothingEnabled = false;
+
+        const horizonY = h * 0.25;
+        const topWidth = Math.min(w * 0.42, 230);
+        const botWidth = Math.min(w * 0.92, 660);
+
+        if (this.isSpacePhase()) {
+          // Verläufe werden einmal erzeugt und wiederverwendet (statt pro Frame neu)
+          ctx.fillStyle = this.getCachedGradient(ctx, 'space' + h, () => {
+            const g = ctx.createLinearGradient(0, 0, 0, h);
+            g.addColorStop(0, '#02040a');
+            g.addColorStop(0.5, '#060b19');
+            g.addColorStop(1, '#090d1c');
+            return g;
+          });
+          ctx.fillRect(0, 0, w, h);
+
+          this.nebulae.forEach((neb, i) => {
+            const ny = ((neb.y * h + this.scrollPos * neb.speed) % (h + 160)) - 80;
+            ctx.save();
+            ctx.translate(neb.x * w, ny);
+            ctx.fillStyle = this.getCachedGradient(ctx, 'neb' + i, () => {
+              const g = ctx.createRadialGradient(0, 0, 8, 0, 0, neb.rx);
+              g.addColorStop(0, neb.color);
+              g.addColorStop(1, 'rgba(0,0,0,0)');
+              return g;
+            });
+            ctx.beginPath();
+            ctx.arc(0, 0, neb.rx, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.restore();
+          });
+
+          for (const s of this.stars) {
+            const sy = (s.y * h + this.scrollPos * s.speed) % h;
+            const sx = s.x * w;
+            const twinkle = 0.45 + 0.55 * Math.sin(now * s.twinkleSpeed + s.twinklePhase);
+            ctx.globalAlpha = twinkle;
+            ctx.fillStyle = s.color;
+            ctx.fillRect(Math.round(sx), Math.round(sy), s.size, s.size);
+          }
+          ctx.globalAlpha = 1;
+
+          const earthRadius = 26 + this.stageGatesCleared * 11 + (this.crashStormActive ? 18 : 0);
+          const earthX = w * 0.5, earthY = horizonY - 12;
+          ctx.fillStyle = '#0284c7';
+          ctx.beginPath();
+          ctx.arc(earthX, earthY, earthRadius, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.fillStyle = '#10b981';
+          ctx.fillRect(earthX - earthRadius * 0.45, earthY - earthRadius * 0.35, earthRadius * 0.55, earthRadius * 0.32);
+          ctx.fillRect(earthX + earthRadius * 0.08, earthY - earthRadius * 0.1, earthRadius * 0.42, earthRadius * 0.38);
+
+          if (Math.floor(now / 220) % 2 === 0) {
+            ctx.strokeStyle = '#39ff14';
+            ctx.lineWidth = 1.5;
+            ctx.strokeRect(earthX - 7, earthY - 7, 14, 14);
+          }
+
+          ctx.fillStyle = this.getCachedGradient(ctx, 'track' + h, () => {
+            const g = ctx.createLinearGradient(0, horizonY, 0, h);
+            g.addColorStop(0, 'rgba(14, 116, 144, 0.16)');
+            g.addColorStop(1, 'rgba(15, 23, 42, 0.52)');
+            return g;
+          });
+          ctx.beginPath();
+          ctx.moveTo(w * 0.5 - topWidth * 0.5, horizonY);
+          ctx.lineTo(w * 0.5 + topWidth * 0.5, horizonY);
+          ctx.lineTo(w * 0.5 + botWidth * 0.5, h);
+          ctx.lineTo(w * 0.5 - botWidth * 0.5, h);
+          ctx.closePath();
+          ctx.fill();
+        } else {
+          this.drawSchoolCorridor(ctx, w, h, horizonY, topWidth, botWidth);
+        }
+
+        // Spur-Trennlinien
+        ctx.strokeStyle = this.isSpacePhase() ? 'rgba(56, 189, 248, 0.38)' : 'rgba(255, 42, 133, 0.38)';
+        ctx.lineWidth = 2;
+        for (let i = 0; i <= this.lanes; i++) {
+          const frac = i / this.lanes - 0.5;
+          ctx.beginPath();
+          ctx.moveTo(w * 0.5 + frac * topWidth, horizonY);
+          ctx.lineTo(w * 0.5 + frac * botWidth, h);
+          ctx.stroke();
+        }
+
+        const projectPoint = (dist, laneFloat) => {
+          const clamped = Math.max(-40, Math.min(750, dist));
+          const t = 1 - clamped / 750;
+          const p = Math.max(0.02, t * t);
+          const y = horizonY + p * (h * 0.84 - horizonY);
+          const curW = topWidth + p * (botWidth - topWidth);
+          const x = w * 0.5 + ((laneFloat + 0.5) / this.lanes - 0.5) * curW;
+          return { x, y, scale: Math.max(0.22, 0.25 + p * 0.95), curW };
+        };
+
+        // Schranke zeichnen
+        if (!this.crashStormActive && this.nextGateDist < 720) {
+          const gp = projectPoint(Math.max(0, this.nextGateDist), (this.lanes - 1) * 0.5);
+          const gateW = gp.curW * 1.04;
+          const gateH = Math.max(24, 95 * gp.scale);
+          const gx = w * 0.5 - gateW * 0.5;
+          const gy = gp.y - gateH;
+
+          ctx.fillStyle = '#090d16';
+          ctx.strokeStyle = '#fbbf24';
+          ctx.lineWidth = 2.5;
+          ctx.fillRect(gx - 6, gy, 10, gateH + 8);
+          ctx.strokeRect(gx - 6, gy, 10, gateH + 8);
+          ctx.fillRect(gx + gateW - 4, gy, 10, gateH + 8);
+          ctx.strokeRect(gx + gateW - 4, gy, 10, gateH + 8);
+
+          ctx.fillStyle = 'rgba(251, 191, 36, 0.22)';
+          ctx.fillRect(gx, gy + gateH * 0.45, gateW, Math.max(6, 14 * gp.scale));
+          ctx.fillStyle = '#090d16';
+          ctx.fillRect(gx, gy, gateW, Math.max(14, 24 * gp.scale));
+          ctx.strokeRect(gx, gy, gateW, Math.max(14, 24 * gp.scale));
+
+          ctx.fillStyle = '#fde047';
+          ctx.font = `800 ${Math.max(10, Math.round(13 * gp.scale))}px system-ui, sans-serif`;
+          ctx.textAlign = 'center';
+          ctx.fillText(`🚧 SCHRANKE ${Math.min(this.gatesPerStage, this.stageGatesCleared + 1)} / ${this.gatesPerStage}`, w * 0.5, gy + Math.max(12, 17 * gp.scale));
+        }
+
+        // Objekte zeichnen
+        const visibleEntities = this.entities.filter(e => !e.collected && e.dist < 740 && e.dist > -35).sort((a, b) => b.dist - a.dist);
+        for (const e of visibleEntities) {
+          const pt = projectPoint(e.dist, e.vLane);
+          const airOff = (e.airHeight || 0) * pt.scale;
+          if (e.type === 'speed_pad') this.drawSpeedPad(ctx, pt.x, pt.y, pt.scale, now);
+          else if (e.type === 'jump_spring') this.drawJumpSpring(ctx, pt.x, pt.y, pt.scale, now);
+          else if (e.type === 'coin') this.drawChronikCoin(ctx, pt.x, pt.y - 14 * pt.scale - airOff, 11 * pt.scale, now);
+          else if (e.type === 'jump_barrier') this.drawJumpBarrier(ctx, pt.x, pt.y, pt.curW / this.lanes, pt.scale, now);
+          else if (e.type === 'shield_pickup') this.drawShieldOrb(ctx, pt.x, pt.y - 12 * pt.scale - airOff, 15 * pt.scale, now);
+          else if (e.type === 'ks1_kers_boost') this.drawGoldenKs1KersBoost(ctx, pt.x, pt.y - 14 * pt.scale - airOff, 16 * pt.scale, now);
+          else if (e.type === 'enemy_fighter') this.drawEnemyFighter(ctx, pt.x, pt.y - 14 * pt.scale, pt.scale, now);
+          else if (e.type === 'asteroid') this.drawAsteroid(ctx, pt.x, pt.y - 12 * pt.scale, 20 * pt.scale, now, e.rotSeed || 0);
+          else if (e.type === 'book_obstacle') this.drawBookObstacle(ctx, pt.x, pt.y - 11 * pt.scale, pt.scale, e.bookColor);
+        }
+
+        // Projektile
+        for (const proj of this.projectiles) {
+          const pp = projectPoint(proj.dist, proj.vLane);
+          ctx.save();
+          ctx.strokeStyle = '#39ff14';
+          ctx.fillStyle = 'rgba(57, 255, 20, 0.45)';
+          ctx.lineWidth = 3;
+          ctx.beginPath();
+          ctx.arc(pp.x, pp.y - 14 * pp.scale, 17 * pp.scale, Math.PI, 0);
+          ctx.fill();
+          ctx.stroke();
+          ctx.restore();
+        }
+
+        // Spieler-Figur
+        const playerPt = projectPoint(0, this.visualLane);
+        const jumpOffset = this.jumpTime > 0 ? Math.sin((1 - this.jumpTime / this.jumpDuration) * Math.PI) * this.jumpPeakHeight : 0;
+
+        ctx.fillStyle = 'rgba(0, 0, 0, 0.45)';
+        ctx.beginPath();
+        ctx.ellipse(playerPt.x, playerPt.y + 6, 24, 8, 0, 0, Math.PI * 2);
+        ctx.fill();
+
+        if (this.shields > 0) {
+          ctx.save();
+          ctx.strokeStyle = this.kersBoostTimer > 0 ? '#fde047' : 'rgba(56, 189, 248, 0.42)';
+          ctx.lineWidth = this.kersBoostTimer > 0 ? 3 : 1.8;
+          ctx.beginPath();
+          ctx.arc(playerPt.x, playerPt.y - 26 - jumpOffset, 36, 0, Math.PI * 2);
+          ctx.stroke();
+          ctx.restore();
+        }
+
+        if (this.isSpacePhase()) this.drawKs1NovaShip(ctx, playerPt.x, playerPt.y - 12 - jumpOffset, now);
+        else this.drawGuardianModel1FromBack(ctx, playerPt.x, playerPt.y - 4 - jumpOffset, now);
+
+        // Partikel & Popups
+        for (const pt of this.particles) {
+          ctx.fillStyle = pt.color;
+          ctx.fillRect(Math.round(pt.x), Math.round(pt.y), Math.ceil(pt.size), Math.ceil(pt.size));
+        }
+
+        for (const ft of this.floatingTexts) {
+          ctx.save();
+          ctx.globalAlpha = Math.max(0, Math.min(1, ft.life));
+          ctx.font = `800 ${Math.max(10, Math.min(14, Math.round(w / 28)))}px system-ui, sans-serif`;
+          ctx.textAlign = 'center';
+          ctx.fillStyle = '#090d16';
+          ctx.fillText(ft.text, Math.round(ft.x) + 1, Math.round(ft.y) + 1);
+          ctx.fillStyle = ft.color;
+          ctx.fillText(ft.text, Math.round(ft.x), Math.round(ft.y));
+          ctx.restore();
+        }
+      },
+
+      // ==========================================================================
+      // 80ER-JAHRE RETRO-SCHULGANG MIT PERSPEKTIV-TÜREN
+      // ==========================================================================
+      drawSchoolCorridor(ctx, w, h, horizonY, topWidth, botWidth) {
+        const ceilHorizonY = h * 0.11;
+        const leftTopX = w * 0.5 - topWidth * 0.5;
+        const rightTopX = w * 0.5 + topWidth * 0.5;
+        const leftBotX = w * 0.5 - botWidth * 0.5;
+        const rightBotX = w * 0.5 + botWidth * 0.5;
+
+        const ceilGrad = ctx.createLinearGradient(0, 0, 0, ceilHorizonY);
+        ceilGrad.addColorStop(0, '#0c0a1d');
+        ceilGrad.addColorStop(1, '#1e1938');
+        ctx.fillStyle = ceilGrad;
+        ctx.beginPath();
+        ctx.moveTo(0, 0); ctx.lineTo(w, 0); ctx.lineTo(rightTopX, ceilHorizonY); ctx.lineTo(leftTopX, ceilHorizonY);
+        ctx.closePath();
+        ctx.fill();
+
+        const lampOffset = (this.scrollPos % 120) / 120;
+        for (let i = 0; i < 5; i++) {
+          const t = (i + lampOffset) / 5;
+          const p = t * t;
+          const ly = ceilHorizonY * (1 - p);
+          const curCeilW = topWidth + p * (w - topWidth);
+          const lw = (topWidth * 0.46) + p * (w * 0.34);
+          const lh = Math.max(4, Math.round(9 * p));
+
+          ctx.fillStyle = '#2e2652';
+          ctx.fillRect(Math.round(w * 0.5 - curCeilW * 0.5), Math.round(ly), Math.round(curCeilW), 2);
+          ctx.save();
+          ctx.globalAlpha = (i === 2 && Math.floor(performance.now() / 110) % 7 === 0) ? 0.45 : 1.0;
+          ctx.fillStyle = '#fef08a';
+          ctx.fillRect(Math.round(w * 0.5 - lw * 0.5), Math.round(ly - lh * 0.5), Math.round(lw), lh);
+          ctx.strokeStyle = '#ff2a85';
+          ctx.lineWidth = 1.5;
+          ctx.strokeRect(Math.round(w * 0.5 - lw * 0.5), Math.round(ly - lh * 0.5), Math.round(lw), lh);
+          ctx.restore();
+        }
+
+        [-1, 1].forEach(side => {
+          const topX = side < 0 ? leftTopX : rightTopX;
+          const botX = side < 0 ? leftBotX : rightBotX;
+          const edgeX = side < 0 ? 0 : w;
+
+          ctx.fillStyle = side < 0 ? '#1b263b' : '#172133';
+          ctx.beginPath();
+          ctx.moveTo(edgeX, 0); ctx.lineTo(topX, ceilHorizonY); ctx.lineTo(topX, horizonY); ctx.lineTo(botX, h); ctx.lineTo(edgeX, h);
+          ctx.closePath();
+          ctx.fill();
+
+          const midTopY = ceilHorizonY + (horizonY - ceilHorizonY) * 0.58;
+          const midBotY = h * 0.54;
+          ctx.fillStyle = side < 0 ? '#111827' : '#0f172a';
+          ctx.beginPath();
+          ctx.moveTo(edgeX, midBotY); ctx.lineTo(topX, midTopY); ctx.lineTo(topX, horizonY); ctx.lineTo(botX, h); ctx.lineTo(edgeX, h);
+          ctx.closePath();
+          ctx.fill();
+
+          ctx.strokeStyle = '#f59e0b'; ctx.lineWidth = 4;
+          ctx.beginPath(); ctx.moveTo(edgeX, midBotY - 3); ctx.lineTo(topX, midTopY - 2); ctx.stroke();
+          ctx.strokeStyle = '#e11d48'; ctx.lineWidth = 3;
+          ctx.beginPath(); ctx.moveTo(edgeX, midBotY + 3); ctx.lineTo(topX, midTopY + 2); ctx.stroke();
+        });
+
+        // Perspektivisch eingebettete 8-Bit Schultüren
+        const numSegments = 4, segCycle = 180;
+        const baseSegIdx = Math.floor(this.scrollPos / segCycle);
+        const segFrac = (this.scrollPos % segCycle) / segCycle;
+        const roomNamesL = ['R-101', 'AV-CLUB', 'J1-HIST', 'LAB-84', 'KS1-A'];
+        const roomNamesR = ['R-102', 'ARCADE', 'J1-GK', 'CHEM-1', 'KS1-B'];
+
+        const getWallSlice = (side, p) => {
+          const x = side < 0 ? leftTopX + p * (leftBotX - leftTopX) : rightTopX + p * (rightBotX - rightTopX);
+          const floorY = horizonY + p * (h - horizonY);
+          const ceilY = ceilHorizonY * (1 - p);
+          return { x, floorY, wallH: floorY - ceilY };
+        };
+
+        for (let i = 0; i < numSegments; i++) {
+          const tFar = (i + segFrac) / numSegments;
+          const tNear = tFar + 0.135;
+          if (tFar < 0.05 || tNear > 0.96) continue;
+          const p1 = tFar * tFar, p2 = tNear * tNear;
+          const pairNumber = Math.abs(baseSegIdx - i);
+
+          [-1, 1].forEach(side => {
+            const s1 = getWallSlice(side, p1), s2 = getWallSlice(side, p2);
+            const doorTop1 = s1.floorY - s1.wallH * 0.74, doorTop2 = s2.floorY - s2.wallH * 0.74;
+            const recessDepth = side * Math.max(4, Math.round(13 * Math.sqrt(p2)));
+
+            ctx.fillStyle = '#090d16';
+            ctx.beginPath(); ctx.moveTo(s1.x, doorTop1); ctx.lineTo(s2.x, doorTop2); ctx.lineTo(s2.x, s2.floorY); ctx.lineTo(s1.x, s1.floorY); ctx.closePath(); ctx.fill();
+
+            ctx.fillStyle = '#271710';
+            ctx.beginPath(); ctx.moveTo(s2.x, doorTop2); ctx.lineTo(s2.x + recessDepth, doorTop2 + 2); ctx.lineTo(s2.x + recessDepth, s2.floorY); ctx.lineTo(s2.x, s2.floorY); ctx.closePath(); ctx.fill();
+
+            const x1 = s1.x + recessDepth * 0.65, x2 = s2.x + recessDepth * 0.65;
+            ctx.fillStyle = side < 0 ? '#853515' : '#9a3c18';
+            ctx.strokeStyle = '#fbbf24';
+            ctx.lineWidth = Math.max(1.5, 2.5 * Math.sqrt(p2));
+            ctx.beginPath(); ctx.moveTo(x1, doorTop1 + 2); ctx.lineTo(x2, doorTop2 + 2); ctx.lineTo(x2, s2.floorY); ctx.lineTo(x1, s1.floorY); ctx.closePath(); ctx.fill(); ctx.stroke();
+
+            const ws1 = getWallSlice(side, p1 + (p2 - p1) * 0.22);
+            const ws2 = getWallSlice(side, p1 + (p2 - p1) * 0.78);
+            const wx1 = ws1.x + recessDepth * 0.65, wx2 = ws2.x + recessDepth * 0.65;
+            const wy1Top = ws1.floorY - ws1.wallH * 0.64, wy2Top = ws2.floorY - ws2.wallH * 0.64;
+            const wy1Bot = ws1.floorY - ws1.wallH * 0.40, wy2Bot = ws2.floorY - ws2.wallH * 0.40;
+
+            ctx.fillStyle = (pairNumber + (side < 0 ? 0 : 1)) % 2 === 0 ? '#fde047' : '#38bdf8';
+            ctx.strokeStyle = '#090d16'; ctx.lineWidth = 2;
+            ctx.beginPath(); ctx.moveTo(wx1, wy1Top); ctx.lineTo(wx2, wy2Top); ctx.lineTo(wx2, wy2Bot); ctx.lineTo(wx1, wy1Bot); ctx.closePath(); ctx.fill(); ctx.stroke();
+
+            ctx.fillStyle = '#fde047';
+            ctx.fillRect(Math.round(x1 + (x2 - x1) * 0.78 - 2), Math.round(s2.floorY - s2.wallH * 0.34 - 2), 5, 5);
+
+            if (p2 > 0.14) {
+              const sc = Math.sqrt(p2);
+              const roomLabel = side < 0 ? roomNamesL[pairNumber % roomNamesL.length] : roomNamesR[pairNumber % roomNamesR.length];
+              const signX = (x1 + x2) * 0.5 + side * (16 * sc);
+              const signY = (doorTop1 + doorTop2) * 0.5 - 10 * sc;
+              const bw = Math.max(30, Math.round(46 * sc)), bh = Math.max(11, Math.round(15 * sc));
+              ctx.fillStyle = '#090d16';
+              ctx.fillRect(Math.round(signX - bw * 0.5), Math.round(signY - bh * 0.5), bw, bh);
+              ctx.strokeStyle = '#ff2a85'; ctx.lineWidth = 1.5;
+              ctx.strokeRect(Math.round(signX - bw * 0.5), Math.round(signY - bh * 0.5), bw, bh);
+              ctx.fillStyle = '#39ff14';
+              ctx.font = `900 ${Math.max(8, Math.round(10 * sc))}px monospace`;
+              ctx.textAlign = 'center';
+              ctx.fillText(roomLabel, signX, signY + bh * 0.26);
+            }
+          });
+        }
+
+        const floorGrad = ctx.createLinearGradient(0, horizonY, 0, h);
+        floorGrad.addColorStop(0, '#141229'); floorGrad.addColorStop(0.5, '#1b1636'); floorGrad.addColorStop(1, '#090814');
+        ctx.fillStyle = floorGrad;
+        ctx.beginPath(); ctx.moveTo(leftTopX, horizonY); ctx.lineTo(rightTopX, horizonY); ctx.lineTo(rightBotX, h); ctx.lineTo(leftBotX, h); ctx.closePath(); ctx.fill();
+
+        const tileOff = (this.scrollPos % 60) / 60;
+        for (let i = 0; i < 8; i++) {
+          const pA = Math.pow((i + tileOff) / 8, 2);
+          const pB = Math.pow(Math.min(1, (i + 0.45 + tileOff) / 8), 2);
+          const yA = horizonY + pA * (h - horizonY), yB = horizonY + pB * (h - horizonY);
+          const wA = topWidth + pA * (botWidth - topWidth);
+          ctx.fillStyle = i % 2 === 0 ? 'rgba(255, 42, 133, 0.09)' : 'rgba(56, 189, 248, 0.08)';
+          ctx.fillRect(Math.round(w * 0.5 - wA * 0.48), Math.round(yA), Math.round(wA * 0.96), Math.max(2, Math.round((yB - yA) * 0.65)));
+        }
+
+        ctx.fillStyle = '#0f0d21'; ctx.strokeStyle = '#ff2a85'; ctx.lineWidth = 2;
+        ctx.fillRect(leftTopX, ceilHorizonY, topWidth, horizonY - ceilHorizonY);
+        ctx.strokeRect(leftTopX, ceilHorizonY, topWidth, horizonY - ceilHorizonY);
+
+        const endDoorW = topWidth * 0.54, endDoorH = (horizonY - ceilHorizonY) * 0.56;
+        ctx.fillStyle = '#090d16';
+        ctx.fillRect(w * 0.5 - endDoorW * 0.5, horizonY - endDoorH, endDoorW, endDoorH);
+        ctx.fillStyle = '#fbbf24';
+        ctx.fillRect(w * 0.5 - endDoorW * 0.42, horizonY - endDoorH + 4, endDoorW * 0.39, endDoorH - 6);
+        ctx.fillRect(w * 0.5 + endDoorW * 0.03, horizonY - endDoorH + 4, endDoorW * 0.39, endDoorH - 6);
+        this.drawKs1Sign(ctx, w * 0.5, ceilHorizonY + 21, 0.88);
+      },
+
+      // ==========================================================================
+      // ANIMIERTE 8-BIT ÜBERGANGSGRAFIK (ERDE & KS1-SCHULGEBÄUDE)
+      // ==========================================================================
+      renderLandingCutscene(now) {
+        const cvs = document.getElementById('landingCutsceneCanvas');
+        if (!cvs) return;
+        const ctx = cvs.getContext('2d');
+        const w = cvs.width, h = cvs.height;
+        const elapsed = ((now - (this.cutsceneStartTime || now)) / 1000) % 6.8;
+        ctx.imageSmoothingEnabled = false;
+
+        if (elapsed < 2.6) {
+          const t = elapsed / 2.6;
+          ctx.fillStyle = '#040612'; ctx.fillRect(0, 0, w, h);
+          ctx.fillStyle = '#e2e8f0';
+          for (let i = 0; i < 36; i++) ctx.fillRect((i * 73) % w, (i * 41) % (h * 0.75), i % 3 === 0 ? 3 : 2, i % 3 === 0 ? 3 : 2);
+
+          const earthY = h + 55 - t * 35, earthR = Math.round(95 + t * 48);
+          ctx.fillStyle = '#0284c7'; ctx.beginPath(); ctx.arc(w * 0.5, earthY, earthR, 0, Math.PI * 2); ctx.fill();
+          ctx.fillStyle = '#10b981';
+          ctx.fillRect(w * 0.5 - 55, earthY - earthR + 18, 46, 24);
+          ctx.fillRect(w * 0.5 + 18, earthY - earthR + 26, 42, 22);
+
+          const targetX = w * 0.5 - 8, targetY = earthY - earthR + 34;
+          if (Math.floor(now / 140) % 2 === 0) { ctx.strokeStyle = '#ff2a85'; ctx.lineWidth = 2; ctx.strokeRect(targetX - 10, targetY - 10, 20, 20); }
+          ctx.fillStyle = '#fde047'; ctx.font = '900 10px monospace'; ctx.textAlign = 'left';
+          ctx.fillText('ZIEL: ERDE / KS1', targetX + 14, targetY + 4);
+
+          ctx.save();
+          ctx.translate(w * 0.22 + t * (targetX - w * 0.22), 38 + t * (targetY - 46));
+          const s = Math.max(0.45, 1 - t * 0.45);
+          ctx.scale(s, s);
+          this.drawKs1NovaShip(ctx, 0, 0, now);
+          ctx.restore();
+
+          ctx.fillStyle = 'rgba(9, 13, 22, 0.85)'; ctx.fillRect(10, 8, w - 20, 24);
+          ctx.fillStyle = '#38bdf8'; ctx.font = '800 11px monospace'; ctx.textAlign = 'center';
+          ctx.fillText('PHASE 1/2: EINTRITT IN DIE ERDATMOSPHÄRE...', w * 0.5, 24);
+        } else {
+          const t2 = Math.min(1, (elapsed - 2.6) / 2.2);
+          const skyGrad = ctx.createLinearGradient(0, 0, 0, h);
+          skyGrad.addColorStop(0, '#0f0c24'); skyGrad.addColorStop(0.55, '#2b1644'); skyGrad.addColorStop(1, '#581c4f');
+          ctx.fillStyle = skyGrad; ctx.fillRect(0, 0, w, h);
+
+          ctx.fillStyle = '#f59e0b'; ctx.fillRect(42, 42, 34, 34);
+          ctx.fillStyle = '#1e293b'; ctx.fillRect(0, 152, w, h - 152);
+          ctx.fillStyle = '#15803d'; ctx.fillRect(0, 146, w, 6);
+
+          const sx = 178, sy = 48, sw = 242, sh = 104;
+          ctx.fillStyle = '#7c2d12'; ctx.fillRect(sx, sy, sw, sh);
+          ctx.fillStyle = '#334155'; ctx.fillRect(sx - 6, sy - 8, sw + 12, 10);
+          for (let row = 0; row < 2; row++) {
+            for (let col = 0; col < 5; col++) {
+              if (row === 1 && col === 2) continue;
+              const wx = sx + 14 + col * 45, wy = sy + 18 + row * 40;
+              ctx.fillStyle = (row + col) % 2 === 0 ? '#fde047' : '#38bdf8';
+              ctx.fillRect(wx, wy, 26, 20);
+            }
+          }
+          ctx.fillStyle = '#0f172a'; ctx.fillRect(sx + 98, sy + 56, 46, 48);
+          ctx.fillStyle = '#38bdf8'; ctx.fillRect(sx + 104, sy + 62, 15, 40); ctx.fillRect(sx + 123, sy + 62, 15, 40);
+          this.drawKs1Sign(ctx, sx + sw * 0.5, sy - 10, 0.68);
+
+          const shipLandY = 30 + Math.min(1, t2 * 1.45) * 116;
+          ctx.save(); ctx.translate(85, shipLandY); ctx.scale(0.75, 0.75); this.drawKs1NovaShip(ctx, 0, 0, now); ctx.restore();
+
+          if (t2 > 0.62) {
+            const walkP = Math.min(1, (t2 - 0.62) / 0.38);
+            ctx.save(); ctx.translate(115 + walkP * 165, 166); ctx.scale(0.62, 0.62);
+            this.drawGuardianModel1FromBack(ctx, 0, 0, now); ctx.restore();
+          }
+
+          ctx.fillStyle = 'rgba(9, 13, 22, 0.88)'; ctx.fillRect(10, 8, w - 20, 22);
+          ctx.fillStyle = '#39ff14'; ctx.font = '800 11px monospace'; ctx.textAlign = 'center';
+          ctx.fillText('PHASE 2/2: GELANDET AN DER KS1 – DER WÄCHTER BETRITT DIE SCHULE!', w * 0.5, 23);
+        }
+      },
+
+      // ==========================================================================
+      // ANIMIERTE 8-BIT FINALE-GRAFIK (QUELLEN-CHRONIK)
+      // ==========================================================================
+      renderBookFinaleCutscene(now) {
+        const cvs = document.getElementById('bookFinaleCanvas');
+        if (!cvs) return;
+        const ctx = cvs.getContext('2d');
+        const w = cvs.width, h = cvs.height;
+        ctx.imageSmoothingEnabled = false;
+
+        ctx.fillStyle = '#0c0a1d'; ctx.fillRect(0, 0, w, h);
+        const shelfColors = ['#e11d48', '#2563eb', '#0d9488', '#d97706', '#fbbf24'];
+        for (let side = 0; side < 2; side++) {
+          const bx = side === 0 ? 14 : w - 94;
+          ctx.fillStyle = '#271c3a'; ctx.fillRect(bx, 22, 80, 130);
+          for (let r = 0; r < 4; r++) {
+            const ry = 32 + r * 30;
+            for (let b = 0; b < 7; b++) {
+              ctx.fillStyle = shelfColors[(r + b + side) % shelfColors.length];
+              ctx.fillRect(bx + 8 + b * 9, ry + 2, 7, 16);
+            }
+          }
+        }
+
+        ctx.fillStyle = '#1e1b38'; ctx.fillRect(0, 150, w, h - 150);
+        this.drawKs1Sign(ctx, w * 0.5, 26, 0.72);
+
+        const bookX = w * 0.5 + 24, bookY = 92 + Math.sin(now * 0.005) * 5;
+        ctx.fillStyle = '#334155'; ctx.fillRect(bookX - 24, 128, 48, 24);
+        ctx.fillStyle = '#fbbf24'; ctx.fillRect(bookX - 18, 134, 36, 4);
+
+        const bx = Math.round(bookX - 26), by = Math.round(bookY - 16);
+        ctx.fillStyle = '#d97706'; ctx.fillRect(bx, by, 52, 30);
+        ctx.fillStyle = '#fefce8'; ctx.fillRect(bx + 4, by + 3, 21, 23); ctx.fillRect(bx + 27, by + 3, 21, 23);
+        ctx.fillStyle = '#111827'; ctx.fillRect(bx + 8, by + 7, 13, 3);
+        ctx.fillStyle = '#e11d48'; ctx.fillRect(bx + 8, by + 10, 13, 3);
+        ctx.fillStyle = '#fbbf24'; ctx.fillRect(bx + 8, by + 13, 13, 3);
+
+        ctx.save(); ctx.translate(w * 0.5 - 38, 162); ctx.scale(0.85, 0.85);
+        this.drawGuardianModel1FromBack(ctx, 0, 0, now); ctx.restore();
+
+        ctx.fillStyle = 'rgba(9, 13, 22, 0.9)'; ctx.fillRect(14, h - 26, w - 28, 20);
+        ctx.fillStyle = '#fde047'; ctx.font = '800 10.5px monospace'; ctx.textAlign = 'center';
+        ctx.fillText(this.victoryAchieved ? '★ GEFUNDEN: DIE QUELLEN-CHRONIK IN DER KS1! ★' : 'DIE QUELLEN-CHRONIK WARTET – VERSUCH ES NOCHMAL!', w * 0.5, h - 12);
+      },
+
+      // ==========================================================================
+      // OBJEKT- & FIGUREN-ZEICHNER
+      // ==========================================================================
+      // Eigenes Schulzeichen: „KS1“ mit drei Schrägstrichen
+      drawKs1Sign(ctx, cx, cy, scale = 1) {
+        ctx.save();
+        ctx.translate(cx, cy);
+        ctx.scale(scale, scale);
+        ctx.fillStyle = '#090d16'; ctx.strokeStyle = '#fbbf24'; ctx.lineWidth = 2;
+        ctx.fillRect(-62, -20, 124, 40); ctx.strokeRect(-62, -20, 124, 40);
+        ctx.font = '900 24px system-ui, sans-serif'; ctx.textAlign = 'left'; ctx.textBaseline = 'middle';
+        ctx.fillStyle = '#38bdf8'; ctx.fillText('KS', -52, 2);
+        ctx.fillStyle = '#fbbf24'; ctx.fillText('1', -15, 2);
+        ['#38bdf8', '#ff2a85', '#39ff14'].forEach((col, i) => {
+          const bx = 6 + i * 15;
+          ctx.fillStyle = col;
+          ctx.beginPath(); ctx.moveTo(bx, 13); ctx.lineTo(bx + 8, -13); ctx.lineTo(bx + 17, -13); ctx.lineTo(bx + 9, 13); ctx.closePath(); ctx.fill();
+        });
+        ctx.restore();
+      },
+
+      drawJumpSpring(ctx, x, y, scale, now) {
+        const w = 34 * scale, h = 14 * scale, bounce = Math.sin(now * 0.015) * 2 * scale;
+        ctx.save();
+        ctx.fillStyle = '#090d16'; ctx.fillRect(x - w * 0.5, y - 5 * scale, w, 5 * scale);
+        ctx.strokeStyle = '#cbd5e1'; ctx.lineWidth = Math.max(1.5, 2.5 * scale);
+        ctx.beginPath(); ctx.moveTo(x - w * 0.3, y - 5 * scale); ctx.lineTo(x + w * 0.3, y - (9 * scale + bounce * 0.5)); ctx.lineTo(x - w * 0.3, y - (13 * scale + bounce)); ctx.stroke();
+        ctx.fillStyle = '#39ff14'; ctx.strokeStyle = '#090d16'; ctx.lineWidth = 1.5;
+        ctx.fillRect(x - w * 0.52, y - h - bounce, w * 1.04, 6 * scale); ctx.strokeRect(x - w * 0.52, y - h - bounce, w * 1.04, 6 * scale);
+        ctx.restore();
+      },
+
+      drawChronikCoin(ctx, x, y, r, now) {
+        ctx.save();
+        ctx.translate(x, y);
+        ctx.scale(Math.max(0.28, Math.abs(Math.cos(now * 0.006))), 1);
+        ctx.fillStyle = '#fbbf24'; ctx.strokeStyle = '#090d16'; ctx.lineWidth = 2;
+        ctx.beginPath(); ctx.arc(0, 0, r, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+        ctx.fillStyle = '#fef08a'; ctx.fillRect(-r * 0.25, -r * 0.45, r * 0.5, r * 0.9);
+        ctx.restore();
+      },
+
+      drawJumpBarrier(ctx, x, y, laneWidth, scale, now) {
+        const bw = laneWidth * 0.94, bh = 22 * scale, pulse = Math.floor(now / 110) % 2 === 0;
+        ctx.save();
+        ctx.fillStyle = '#090d16';
+        ctx.fillRect(x - bw * 0.5, y - bh, 5 * scale, bh);
+        ctx.fillRect(x + bw * 0.5 - 5 * scale, y - bh, 5 * scale, bh);
+        ctx.fillStyle = this.isSpacePhase() ? (pulse ? '#ff2a85' : '#38bdf8') : (pulse ? '#ef4444' : '#f59e0b');
+        ctx.fillRect(x - bw * 0.5, y - bh + 2 * scale, bw, 8 * scale);
+        ctx.strokeStyle = '#fde047'; ctx.lineWidth = 1.5;
+        ctx.strokeRect(x - bw * 0.5, y - bh + 2 * scale, bw, 8 * scale);
+        ctx.restore();
+      },
+
+      drawSpeedPad(ctx, x, y, scale, now) {
+        const w = 38 * scale, h = 18 * scale;
+        ctx.save();
+        ctx.fillStyle = 'rgba(16, 185, 129, 0.28)';
+        ctx.strokeStyle = Math.floor(now / 90) % 2 === 0 ? '#39ff14' : '#10b981';
+        ctx.lineWidth = 2;
+        ctx.beginPath(); ctx.moveTo(x - w * 0.5, y); ctx.lineTo(x + w * 0.5, y); ctx.lineTo(x + w * 0.38, y - h); ctx.lineTo(x - w * 0.38, y - h); ctx.closePath(); ctx.fill(); ctx.stroke();
+        ctx.restore();
+      },
+
+      drawGoldenKs1KersBoost(ctx, x, y, r, now) {
+        ctx.save();
+        ctx.translate(x, y);
+        const pulse = 1 + Math.sin(now * 0.01) * 0.08;
+        ctx.scale(pulse, pulse);
+        const bw = r * 2.25, bh = r * 1.25;
+        ctx.fillStyle = '#090d16'; ctx.strokeStyle = '#fbbf24'; ctx.lineWidth = 2;
+        ctx.fillRect(-bw * 0.5, -bh * 0.5, bw, bh); ctx.strokeRect(-bw * 0.5, -bh * 0.5, bw, bh);
+        ctx.font = `900 ${Math.max(9, Math.round(r * 0.62))}px system-ui, sans-serif`; ctx.textAlign = 'left'; ctx.textBaseline = 'middle';
+        ctx.fillStyle = '#38bdf8'; ctx.fillText('KS', -bw * 0.42, 1);
+        ctx.fillStyle = '#fbbf24'; ctx.fillText('1', -bw * 0.05, 1);
+        ['#38bdf8', '#ff2a85', '#39ff14'].forEach((col, i) => {
+          const sx = bw * 0.12 + i * (r * 0.26);
+          ctx.fillStyle = col;
+          ctx.fillRect(sx, -bh * 0.3, Math.max(2, r * 0.16), bh * 0.6);
+        });
+        ctx.restore();
+      },
+
+      drawBookObstacle(ctx, cx, cy, scale, coverCol = BOOK_COLORS[0].cover) {
+        const pSize = Math.max(2, Math.round(3.1 * scale));
+        const sprite = this.spriteCache.books[coverCol] || this.spriteCache.books[BOOK_COLORS[0].cover];
+        this.drawSprite(ctx, sprite, cx - 8 * pSize, cy - 6.5 * pSize, pSize);
+      },
+
+      drawShieldOrb(ctx, x, y, r, now) {
+        ctx.save();
+        ctx.translate(x, y);
+        const pulse = 1 + Math.sin(now * 0.008) * 0.08;
+        ctx.scale(pulse, pulse);
+        ctx.fillStyle = '#0284c7'; ctx.strokeStyle = '#7dd3fc'; ctx.lineWidth = 2;
+        ctx.beginPath(); ctx.arc(0, 0, r * 0.85, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+        ctx.font = `900 ${Math.max(10, Math.round(r * 0.85))}px system-ui, sans-serif`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+        ctx.fillText('🛡️', 0, 1);
+        ctx.restore();
+      },
+
+      drawAsteroid(ctx, cx, cy, r, now, seed) {
+        const pSize = Math.max(2, Math.round((r * 2.3) / 16));
+        this.drawSprite(ctx, this.spriteCache.asteroid, cx - 8 * pSize, cy - 8 * pSize, pSize);
+        const pebbleOff = Math.sin(now * 0.006 + seed) * (r * 0.25);
+        ctx.fillStyle = '#a8a29e';
+        ctx.fillRect(Math.round(cx - r * 1.25), Math.round(cy - r * 0.3 + pebbleOff), pSize * 2, pSize * 2);
+      },
+
+      drawEnemyFighter(ctx, cx, cy, scale, now) {
+        const pSize = Math.max(2, Math.round(2.8 * scale));
+        const sprite = Math.floor(now / 80) % 2 === 0 ? this.spriteCache.enemyA : this.spriteCache.enemyB;
+        this.drawSprite(ctx, sprite, cx - 9 * pSize, cy - 7 * pSize, pSize);
+      },
+
+      // Scharfes 2x-Rendering des eigenen Flugzeug-Modells
+      drawKs1NovaShip(ctx, cx, cy, now) {
+        if (!this.shipSpriteA) this.buildCrispShipSprites();
+        const sprite = this.kersBoostTimer > 0 ? this.shipSpriteBoost : (Math.floor(now / 60) % 2 === 0 ? this.shipSpriteB : this.shipSpriteA);
+        const scale = 2;
+        const drawW = sprite.width * scale, drawH = sprite.height * scale;
+        const bankShiftX = Math.round((this.playerLane - this.visualLane) * -8);
+        ctx.save();
+        ctx.imageSmoothingEnabled = false;
+        ctx.drawImage(sprite, Math.round(cx - drawW * 0.5 + bankShiftX), Math.round(cy - drawH * 0.54), drawW, drawH);
+        ctx.restore();
+      },
+
+      // Wächter von hinten (Kapuze, Rucksack, grün leuchtender Wächterstab)
+      drawGuardianModel1FromBack(ctx, cx, cy, now) {
+        const sprite = Math.floor(now / 130) % 2 === 0 ? this.spriteCache.guardianA : this.spriteCache.guardianB;
+        const pSize = 2;
+        const startX = Math.round(cx - 16 * pSize), startY = Math.round(cy - 33 * pSize);
+
+        const glowR = this.kersBoostTimer > 0 ? 26 : 17;
+        const glow = this.getCachedGradient(ctx, 'guardianGlow' + glowR, () => {
+          const g = ctx.createRadialGradient(0, 0, 2, 0, 0, glowR);
+          g.addColorStop(0, 'rgba(57, 255, 20, 0.55)');
+          g.addColorStop(1, 'rgba(57, 255, 20, 0)');
+          return g;
+        });
+        ctx.save();
+        ctx.translate(startX + 26 * pSize, startY + 5 * pSize);
+        ctx.fillStyle = glow;
+        ctx.beginPath();
+        ctx.arc(0, 0, glowR, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.restore();
+
+        this.drawSprite(ctx, sprite, startX, startY, pSize);
+      }
+    };
+
+    window.addEventListener('load', function () {
+      app.init();
+      game.init();
+    });
+  </script>
+</body>
+</html>
